@@ -4,22 +4,44 @@ pragma solidity >=0.7.0 <0.9.0;
 
 contract Student {
   address public addr;
-  constructor(address _addr) {
+  bool public studies;
+  uint public studentId;
+  uint public groupId;
+  uint[] public courseIds;
+  uint totalCourses;
+  mapping (uint => bool) enrolledTo;
+
+  constructor(address _addr, uint _id, uint _groupId) {
     addr = _addr;
+    studies = true;
+    studentId = _id;
+    groupId = _groupId;
+    totalCourses = 0;
   }
-  mapping (string => bool) courses;
-  mapping (string => mapping (uint256 => uint256)) grades;
-  mapping (string => mapping (uint256 => bool)) attendance;
-  function requestToJoinCourse(string calldata courseName, address teacher) public {
-    
+
+  function getAddress() public view returns (address) {
+    return addr;
   }
-  function isEnrolled(string calldata courseName) public view returns (bool) {
-    return courses[courseName];
+
+  function getId() public view returns (uint) {
+    return studentId;
   }
-  function setGrade(string calldata courseName, uint256 date, uint256 grade) public {
-    grades[courseName][date] = grade;
+
+  function isEnrolledTo(uint _courseId) public view returns (bool) {
+    return enrolledTo[_courseId];
   }
-  function setAttendance(string calldata courseName, uint256 date, bool attendanceStatus) public {
-    attendance[courseName][date] = attendanceStatus;
+
+  function setGroupId(uint _groupId) public {
+    groupId = _groupId;
+  }
+
+  function enrollToCourse(uint _courseId) public {
+    courseIds.push(_courseId);
+    enrolledTo[_courseId] = true;
+    totalCourses++;
+  }
+
+  function requestToJoinCourse(uint _courseId) public {
+
   }
 }
