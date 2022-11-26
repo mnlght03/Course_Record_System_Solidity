@@ -231,16 +231,16 @@ contract Main {
     gradeBook.getBook(courseId, studentAddress, teacherAddress, startDate, endDate);
   }
 
-  function getAverageScore(uint courseId, address studentAddress, uint groupId) public view returns (uint) {
-    require(courseId == 0 || courseList.courseExists(courseId), "Course doesn't exist");
-    require(studentAddress == address(0) || isStudent(studentAddress));
-    return gradeBook.getAverageScore(courseId, studentAddress, groupId);
+  function getAverageScore(uint courseId, address studentAddress) public view returns (uint) {
+    require(courseList.courseExists(courseId), "Course doesn't exist");
+    require(isStudent(studentAddress));
+    return gradeBook.getAverageScore(courseId, studentAddress);
   }
 
-  function getAverageAttendance(uint courseId, address studentAddress, uint groupId) public view returns (uint) {
-    require(courseId == 0 || courseList.courseExists(courseId), "Course doesn't exist");
-    require(studentAddress == address(0) || isStudent(studentAddress));
-    return gradeBook.getAverageAttendance(courseId, studentAddress, groupId);
+  function getAverageAttendance(uint courseId, address studentAddress) public view returns (uint) {
+    require(courseList.courseExists(courseId), "Course doesn't exist");
+    require(isStudent(studentAddress));
+    return gradeBook.getAverageAttendance(courseId, studentAddress);
   }
 
   event CourseInsertedInTimeTable(address initiator, uint courseId, string day, string numberOfLesson);
@@ -269,15 +269,15 @@ contract Main {
   event MarkedAttendance(address teacher, address student, uint courseId, uint date, bool status);
   event AssignmentRated(address teacher, address student, uint courseId, uint date, uint8 grade);
 
-  function markAttendance(uint courseId, address studentAddress, uint date, bool status) onlyTeacher public {
+  function markAttendance(uint date, uint courseId, address studentAddress, bool status) onlyTeacher public {
     require(teacherList.getTeacherByAddres(msg.sender).teachesCourse(courseId));
     require(studentList.getStudentByAddress(studentAddress).studiesCourse(studentId));
     // @dev teacherAddress (maybe not ?), studentAddress, date, status
-    gradeBook.markAttendance(msg.sender, studentAddress, date, status);
+    gradeBook.markAttendance(date, courseId, studentAddress, status);
     emit MarkedAttendance(msg.sender, studentAddress, courseId, date, status);
   }
 
-  function rateAssignment(uint courseId, address studentAddress, uint date, string calldata grade) onlyTeacher public {
+  function rateAssignment(uint date, uint courseId, address studentAddress, string calldata grade) onlyTeacher public {
     require(teacherList.getTeacherByAddres(msg.sender).teachesCourse(courseId));
     require(studentList.getStudentByAddress(studentAddress).studiesCourse(courseId));
     gradeBook.rateAssignment(studentAddress, date, gradeBook.stringToGrade(grade));
