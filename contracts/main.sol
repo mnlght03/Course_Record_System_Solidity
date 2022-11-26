@@ -12,7 +12,7 @@ import "./GradeBook.sol";
 contract Main {
   enum Roles{ NONE, SUPERADMIN, ADMIN, TEACHER, STUDENT }
   mapping (address => Roles) roles;
-  AdminList adminList;
+  AdminList adminList = new AdminList();
   constructor() {
     roles[msg.sender] = Roles.SUPERADMIN;
     adminList.addAdmin(new Administrator(msg.sender, 0));
@@ -52,9 +52,9 @@ contract Main {
     _;
   }
 
-  TeacherList public teacherList;
-  StudentList public studentList;
-  CourseList public courseList;
+  TeacherList public teacherList = new TeacherList();
+  StudentList public studentList = new StudentList();
+  CourseList public courseList = new CourseList();
 
   event NewAdmin(address initiator, address newAdminAddr);
   event AdminDeleted(address initiator, address deletedAddr);
@@ -188,8 +188,8 @@ contract Main {
   }
 
 
-  TimeTable timeTable;
-  GradeBook gradeBook;
+  TimeTable timeTable = new TimeTable();
+  GradeBook gradeBook = new GradeBook();
 
   function isNullAddress(address addr) internal bool returns (bool) {
     return addr == address(0);
@@ -272,7 +272,6 @@ contract Main {
   function markAttendance(uint date, uint courseId, address studentAddress, bool status) onlyTeacher public {
     require(teacherList.getTeacherByAddres(msg.sender).teachesCourse(courseId));
     require(studentList.getStudentByAddress(studentAddress).studiesCourse(studentId));
-    // @dev teacherAddress (maybe not ?), studentAddress, date, status
     gradeBook.markAttendance(date, courseId, studentAddress, status);
     emit MarkedAttendance(msg.sender, studentAddress, courseId, date, status);
   }
