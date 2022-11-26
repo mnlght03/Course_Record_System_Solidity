@@ -2,18 +2,20 @@
 
 pragma solidity >=0.7.0 <0.9.0;
 
-import "./Admin.sol";
-import "./Student.sol";
-import "./Teacher.sol";
-import "./Course.sol";
+import "./AdminList.sol";
+import "./StudentList.sol";
+import "./TeacherList.sol";
+import "./CourseList.sol";
+import "./TimeTable.sol";
+import "./GradeBook.sol";
 
 contract Main {
   enum Roles{ NONE, SUPERADMIN, ADMIN, TEACHER, STUDENT }
-  enum DayOfTheWeek{ SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY }
   mapping (address => Roles) roles;
+  AdminList adminList;
   constructor() {
     roles[msg.sender] = Roles.SUPERADMIN;
-    admins.push(new Administrator(msg.sender, 0));
+    adminList.addAdmin(new Administrator(msg.sender, 0));
   }
 
   function isSuperAdmin(address _addr) public pure returns (bool) {
@@ -50,98 +52,17 @@ contract Main {
     _;
   }
 
-  Administrator[] public admins;
-  mapping (address => uint) adminsIdMapping;
-  
-  //  TODO: add same functions for admin and students
-  //        and decompose those arrays to separate contracts 
-  Teacher[] public teachers;
-  mapping (address => uint) teachersIdMapping;
-  
-  function getTeacherById(uint _teacherId) public view returns (Teacher) {
-    require(_teacherId > 0 && _teacherId <= teachers.length);
-    return teachers[_teacherId - 1];
-  }
+  TeacherList public teacherList;
+  StudentList public studentList;
+  CourseList public courseList;
 
-  function getTeacherIdByAddress(address _addr) public view returns (uint) {
-    require(isTeacher(_addr));
-    return teachersIdMapping[_addr];
-  }
-
-  function getTeacherByAddress(uint _addr) public view returns (Teacher) {
-    return getTeacherById(getTeacherIdByAddress(_addr));
-  }
-
-
-  Student[] public students;
-  mapping (address => uint) studentsIdMapping;
-
-  function getStudentById(uint _studentId) public view returns (Student) {
-    require(_studentId > 0 && _studentId <= students.length);
-    return students[_studentId - 1];
-  }
-
-
-  Course[] public courses;
-  // courseName => courseId
-  mapping (string => uint) courseIdMapping;
-  
-  function getCourseById(uint _courseId) public view returns (Course) {
-    require(_courseId > 0 && _courseId <= courses.length);
-    return courses[_courseId - 1];
-  }
-
-  function getCourseInfo(uint _courseId) public view returns (Course.CourseInfo) {
-    return getCourseById(_courseId).getCourseInfo();
-  }
-
-  function courseIsAvailable(uint _courseId) public view returns (bool available) {
-    return getCourseById(_courseId).isAvailable();
-  }
-
-  function courseExists(string memory courseName) internal returns (bool) {
-    return courseIdMapping[courseName] != 0;
-  }
-
-  function courseExists(uint _courseId) internal returns (bool) {
-    return _courseId > 0 && _courseId <= courses.length && courseExists(getCourseById(_courseId).getCourseName());
-  }
-
-  function getCourseTeachersIds(uint _courseId) public view returns (uint[] memory teacherIds) {
-    return getCourseById(_courseId).getCourseTeachersIds();
-  }
-
-  function getCourseTeachers(uint _courseId) public view returns (Teacher[] memory courseTeachers) {
-    uint[] memory teacherIds = getCourseTeachersIds(_courseId);
-    for (uint i = 0; i < teacherIds.length; i++) {
-      courseTeachers[i] = getTeacherById(teacherIds[i]);
-    }
-  }
-
-  struct StudentGroup {
-    uint groupId;
-    uint[] studentIds;
-    bool exists;
-  }
-  
   event NewAdmin(address initiator, address newAdminAddr);
   event AdminDeleted(address initiator, address deletedAddr);
-
-  event NewTeacher(address initiator, address newTeacherAddr);
-  event TeacherDeleted(address initiator, address deletedAddr);
-  event TeacherAssignedToCourse(address initiator, address teacherAddress, uint courseId);
-  event TeacherUnassignedFromCourse(address initiator, address teacherAddress, uint courseId);
-
-  event NewStudent(address initiator, address newStudentAddr);
-  event StudentDeleted(address initiator, address deletedAddr);
-
-  event NewCourse(address initiator, uint courseId);
-  event CourseDeleted(address initiator, uint courseId, string courseName);
 
   function addAdmin(address newAdminAddr) onlyAdmin public {
     require(newAdminAddr != address(0));
     roles[newAdminAddr] = Roles.ADMIN;
-    admins.push(new Administrator(newAdminAddr, admins.length));
+    adminList.addAdmin(newAdminAddr);
     emit NewAdmin(msg.sender, newAdminAddr);
   }
 
@@ -152,68 +73,214 @@ contract Main {
     emit AdminDeleted(msg.sender, adminAddr);
   }
 
+  event NewTeacher(address initiator, address newTeacherAddr);
+  event TeacherDeleted(address initiator, address deletedAddr);
+
   function addTeacher(address newTeacherAddr) onlyAdmin public {
     require(newTeacherAddr != address(0));
-    uint teacherId = teachers.length + 1;
-    teachers.push(new Teacher(newTeacherAddr, teacherId));
+    teacherList.addTeacher(newTeacherAddr);
     roles[newTeacherAddr] = Roles.TEACHER;
     emit NewTeacher(msg.sender, newTeacherAddr);
   }
 
-  function assignTeacherToCourse(Teacher _teacher, uint _courseId, uint[] _groups) onlyAdmin public {
-    require(_courseId > 0 && _courseId <= courses.length);
-    _teacher.assignToCourse(_courseId, _groups);
-    courses[_courseId - 1].courseInfo.teacherIds.push(_teacher.getId());
-    emit TeacherAssignedToCourse(msg.sender, _teacher.addr(), _courseId);
-  }
-  
-  function unassignTeacherFromCourse(Teacher _teacher, uint _courseId) onlyAdmin public {
-    require(_courseId > 0 && _courseId <= courses.length);
-    _teacher.unassignFromCourse(_courseId);
-    deleteTeacherIdFromCourse(_teacher.getId(), _courseId);
-    emit TeacherUnassignedFromCourse(msg.sender, _teacher.addr(), _courseId);
+  function deleteTeacher(address teacherAddress) onlyAdmin public {
+    require(isTeacher(teacherAddress));
+    teacherList.deleteTeacher(teacherAddress);
+    roles[teacherAddress] = Roles.NONE;
+    emit TeacherDeleted(msg.sender, teacherAddress);
   }
 
-  function deleteTeacherIdFromCourse(uint _teacherId, uint _courseId) internal {
-    uint[] storage ids = courses[_courseId - 1].courseInfo.teacherIds;
-    for (uint i = 0; i < ids.length; i++)
-      if (ids[i] == _teacherId) {
-        delete ids[i];
-        break;
-      }
+  event TeacherAssignedToCourse(address initiator, address teacherAddress, uint courseId);
+  event TeacherUnassignedFromCourse(address initiator, address teacherAddress, uint courseId);
+
+  function assignTeacherToCourse(address teacherAddress, uint _courseId) onlyAdmin public {
+    require(isTeacher(teacherAddress));
+    teacherList.assignTeacherToCourse(teacherAddress, _courseId);
+    emit TeacherAssignedToCourse(msg.sender, teacherAddress, _courseId);
   }
 
-  // function deleteTeacher(uint _teacherId) public {
+  function unassignTeacherFromCourse(address teacherAddress, uint _courseId) onlyAdmin public {
+    require(isTeacher(teacherAddress));
+    require(teacherList.getTeacherByAddres(teacherAddress).teachesCourse(_courseId));
+    teacherList.unassignTeacherFromCourse(teacherAddress, _courseId);
+    emit TeacherUnassignedToCourse(msg.sender, teacherAddress, _courseId);
+  }
 
-  // }
+  event GroupAssignedToTeacher(address initiator, uint groupId, uint courseId, address teacherAddress);
+  event GroupUnassignedFromTeacher(address initiator, uint groupId, uint courseId, address teacherAddress);
+
+  function assignGroupToCourseTeacher(uint _groupId, uint _courseId, address teacherAddress) onlyAdmin public {
+    require(isTeacher(teacherAddress));
+    require(groupExists(_groupId));
+    require(courseList.courseExists(_courseId));
+    teacherList.assignGroupToCourseTeacher(teacherAddress, _groupId, _courseId);
+    emit GroupAssignedToTeacher(msg.sender, _groupId, _courseId, teacherAddress);
+  }
+
+  function unassignGroupFromCourseTeacher(uint _groupId, uint _courseId, address teacherAddress) onlyAdmin public {
+    require(isTeacher(teacherAddress));
+    require(groupExists(_groupId));
+    require(courseList.courseExists(_courseId));
+    require(teacherList.getTeacherByAddres(teacherAddress).teachesCourseToGroup(_courseId, _groupId));
+    teacherList.unassignGroupFromCourseTeacher(teacherAddress, _groupId, _courseId);
+    emit GroupUnassignedFromTeacher(msg.sender, _groupId, _courseId, teacherAddress);
+  }
+
+  event NewStudent(address initiator, address newStudentAddr, uint groupId);
+  event StudentDeleted(address initiator, address deletedAddr, uint groupId);
 
   function addStudent(address newStudentAddr, uint _groupId) onlyAdmin public {
     require(newStudentAddr != address(0));
     require(groupExists(_groupId));
-    uint _studentId = students.length + 1;
-    students.push(new Student(newStudentAddr, _studentId, _groupId));
     roles[newStudentAddr] = Roles.STUDENT;
+    studentList.addStudent(newStundetAddr, _groupId);
     emit NewStudent(msg.sender, newStudentAddr);
   }
 
+  function deleteStudent(address studentAddress) onlyAdmin public {
+    require(isStudent(studentAddress));
+    uint groupId = studentList.getStudentGroupId(studentAddress);
+    studentList.deleteStudent(studentAddress);
+    roles[studentAddress] = Roles.NONE;
+    emit StudentDeleted(msg.sender, studentAddress, groupId);
+  }
+
+  event ChangedStudentGroup(address initiator, address studentAddress, uint oldGroupId, uint newGroupId);
+
+  function changeStudentGroup(address studentAddress, uint newGroup) onlyAdmin public {
+    require(isStudent(studentAddress));
+    uint oldGroup = studentList.getStudentGroupId(studentAddress);
+    studentList.changeStudentGroup(studentAddress, newGroup);
+    emit ChangedStudentGroup(msg.sender, studentAddress, oldGroup, newGroup);
+  }
+
+  event StudentAddedToCourse(address initiator, address studentAddress, uint courseId);
+  event StudentDeletedFromCourse(address initiator, address studentAddress, uint courseId);
+
+  function addStudentToCourse(address studentAddress, uint courseId) onlyAdminOrTeacher public {
+    require(isStudent(studentAddress));
+    require(courseList.courseExists(courseId));
+    require(courseList.getCourse(courseId).isAvailableForGroup(studentList.getStudentGroup(studentAddress)),
+            "Course is unavailable for this group");
+    studentList.addStudentToCourse(studentAddress, courseId);
+    emit StudentAddedToCourse(msg.sender, studentAddress, courseId);
+  }
+
+  function deleteStudentFromCourse(address studentAddress, uint courseId) onlyAdminOrTeacher public {
+    require(isStudent(studentAddress));
+    studentList.deleteStudentFromCourse(studentAddress, courseId);
+    emit StudentDeletedFromCourse(msg.sender, studentAddress, courseId);
+  }
+
+  event NewCourse(address initiator, uint courseId, uint courseName);
+  event CourseDeleted(address initiator, uint courseId, string courseName);
+
   function addCourse(string memory courseName) onlyAdmin public {
-    require(!courseExists(courseName));
-    uint id = courses.length + 1;
-    courses.push(new Course(courseName, id));
-    courseIdMapping[courseName] = id;
-    emit NewCourse(msg.sender, id);
+    courseList.addCourse(courseName);
+    emit NewCourse(msg.sender, courseList.getCourseId(courseName), courseName);
   }
 
   function deleteCourse(uint _courseId) onlyAdmin public {
-    require(courseExists(_courseId));
-    string memory courseName = getCourseById(_courseId).getCourseName();
-    delete courseIdMapping[courseName];
-    delete courses[_courseId - 1];
-    // delete course from all users
-    emit CourseDeleted(msg.sender, _courseId, courseName);
+    string memory name = courseList.getCourseName(_courseId);
+    courseList.deleteCourse(_courseId);
+    // TODO : delete course from all users
+    emit CourseDeleted(msg.sender, _courseId, name);
   }
 
-  function makeCourseUnavailable(uint _courseId) onlyAdmin public {
-    require(courseExists(_courseId));
+
+  TimeTable timeTable;
+  GradeBook gradeBook;
+
+  function isNullAddress(address addr) internal bool returns (bool) {
+    return addr == address(0);
+  }
+
+  function courseApprovedForTimetable(uint courseId, address studentAddress, address teacherAddress) internal view returns (bool) {
+    return (isNullAddress(studentAddress) && isNullAddress(teacherAddress) ||
+            isNullAddress(studentAddress) &&
+            teacherList.getTeacherByAddres(teacherAddress).teachesCourse(courseId) ||
+            isNullAddress(teacherAddress) &&
+            studentList.getStudentByAddress(studentAddress).studiesCourse(courseId) ||
+            studentList.getStudentByAddress(studentAddress).studiesCourse(courseId) &&
+            teacherList.getTeacherByAddres(teacherAddress).teachesCourse(courseId));
+  }
+
+  // @dev specify id = 0 to show for all ids
+  function getTimeTable(uint courseId, address studentAddress, address teacherAddress) public view returns (uint[7][9]) {
+    require(courseId == 0 || courseList.courseExists(courseId), "Course doesn't exist");
+    require(studentAddress == address(0) || isStudent(studentAddress));
+    require(teacherAddress == address(0) || isTeacher(teacherAddress));
+    uint[] memory courses;
+    if (courseId != 0 && courseApprovedForTimetable(courseId, studentAddress, teacherAddress)) {
+          courses.push(courseId);
+    }
+    else {
+      for (uint i = 0; i < courseList.list().length; i++) {
+        if (courseList[i].exists() && courseApprovedForTimetable(courseList[i]))
+          courses.push(courseList[i].getId());
+      }
+    }
+    return timeTable.getTable(courses);
+  }
+
+  function getGradeBook(uint courseId, address studentAddress, address teacherAddress, uint startDate, uint endDate) public view {
+    require(courseId == 0 || courseList.courseExists(courseId), "Course doesn't exist");
+    require(studentAddress == address(0) || isStudent(studentAddress));
+    require(teacherAddress == address(0) || isTeacher(teacherAddress));
+    require(startDate <= endDate);
+    gradeBook.getBook(courseId, studentAddress, teacherAddress, startDate, endDate);
+  }
+
+  function getAverageScore(uint courseId, address studentAddress, uint groupId) public view returns (uint) {
+    require(courseId == 0 || courseList.courseExists(courseId), "Course doesn't exist");
+    require(studentAddress == address(0) || isStudent(studentAddress));
+    return gradeBook.getAverageScore(courseId, studentAddress, groupId);
+  }
+
+  function getAverageAttendance(uint courseId, address studentAddress, uint groupId) public view returns (uint) {
+    require(courseId == 0 || courseList.courseExists(courseId), "Course doesn't exist");
+    require(studentAddress == address(0) || isStudent(studentAddress));
+    return gradeBook.getAverageAttendance(courseId, studentAddress, groupId);
+  }
+
+  event CourseInsertedInTimeTable(address initiator, uint courseId, string day, string numberOfLesson);
+  event CourseDeletedFromTimeTable(address initiator, uint courseId, string day, string numberOfLesson);
+  event ChangedCourseInTimeTable(address inititator, uint oldCourse, uint newCourse, string day, string numberOfLesson);
+
+  function insertCourseInTimetable(uint courseId, string calldata day, string calldata numberOfLesson) onlyAdmin public {
+    require(courseList.courseExists(courseId));
+    timeTable.insertCourse(courseId, day, numberOfLesson);
+    emit CourseInsertedInTimeTable(msg.sender, courseId, day, numberOfLesson);
+  }
+
+  function deleteCourseFromTimetable(string calldata day, string calldata numberOfLesson) onlyAdmin public {
+    uint courseId = timeTable.getCourseId(day, numberOfLesson);
+    timeTable.deleteCourse(courseId, day, numberOfLesson);
+    emit CourseDeletedFromTimetable(msg.sender, courseId, day, numberOfLesson);
+  }
+
+  function changeCourseInTimetable(string calldata day, string calldata numberOfLesson, uint newCourse) onlyAdmin public {
+    require(courseList.courseExists(newCourse));
+    uint oldCourse = timeTable.getCourseId(day, numberOfLesson);
+    timeTable.insertCourse(newCourse, day, numberOfLesson);
+    emit ChangedCourseInTimeTable(msg.sender, oldCourse, newCourse, day, numberOfLesson);
+  }
+
+  event MarkedAttendance(address teacher, address student, uint courseId, uint date, bool status);
+  event AssignmentRated(address teacher, address student, uint courseId, uint date, uint8 grade);
+
+  function markAttendance(uint courseId, address studentAddress, uint date, bool status) onlyTeacher public {
+    require(teacherList.getTeacherByAddres(msg.sender).teachesCourse(courseId));
+    require(studentList.getStudentByAddress(studentAddress).studiesCourse(studentId));
+    // @dev teacherAddress (maybe not ?), studentAddress, date, status
+    gradeBook.markAttendance(msg.sender, studentAddress, date, status);
+    emit MarkedAttendance(msg.sender, studentAddress, courseId, date, status);
+  }
+
+  function rateAssignment(uint courseId, address studentAddress, uint date, string calldata grade) onlyTeacher public {
+    require(teacherList.getTeacherByAddres(msg.sender).teachesCourse(courseId));
+    require(studentList.getStudentByAddress(studentAddress).studiesCourse(courseId));
+    gradeBook.rateAssignment(studentAddress, date, gradeBook.stringToGrade(grade));
+    emit AssignmentRated(msg.sender, studentAddress, courseId, date, grade);
   }
 }

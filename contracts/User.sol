@@ -3,9 +3,9 @@
 pragma solidity >=0.7.0 <0.9.0;
 
 contract User {
-  address public addr;
-  bool public deleted;
-  uint public id;
+  address addr;
+  bool deleted;
+  uint id;
 
   constructor(address _addr, uint _id) {
     addr = _addr;
@@ -19,6 +19,16 @@ contract User {
   function getId() public view returns (uint) {
     return id;
   }
+
+  function exists() public view returns (bool) {
+    return !deleted;
+  }
+
+  function deleteSelf() virtual public {
+    delete addr;
+    delete id;
+    deleted = true;
+  }
 }
 
 contract EducationUser is User {
@@ -30,7 +40,7 @@ contract EducationUser is User {
 
   // TODO: ADD EVENTS FOR ADDING AND DELETING COURSES (here or in main contract ?)
 
-  function isAttachedToCourse(uint _courseId) public view returns (bool) {
+  function isAttachedToCourse(uint _courseId) internal view returns (bool) {
     return attachedCourses[_courseId];
   }
 
@@ -42,9 +52,22 @@ contract EducationUser is User {
   }
 
   function deleteCourse(uint _courseId) public {
+    require(isAttachedToCourse(_courseId));
     delete courseIds[getCourseIdx(_courseId)];
     attachedCourses[_courseId] = false;
     totalCourses--;
+  }
+
+  function deleteSelf() public virtual override {
+    delete addr;
+    delete id;
+    delete totalCourses;
+    for (uint i = 0; i < courseIds.length; i++) {
+      delete attachedCourses[getCourseId(i)];
+      delete courseIdx[getCourseId(i)];
+    }
+    delete courseIds;
+    deleted = true;
   }
 
   function getCourseId(uint idx) internal view returns (uint) {

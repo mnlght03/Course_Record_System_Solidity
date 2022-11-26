@@ -3,43 +3,65 @@
 pragma solidity >=0.7.0 <0.9.0;
 
 contract Course {
-  struct CourseInfo {
-    string name;
-    uint[] teacherIds;
-    uint courseId;
-    bool available;
-  }
+  string public name;
+  uint public id;
+  address[] public teacherAddresses;
+  uint public totalTeachers;
+  // @dev address => idx
+  mapping (address => uint) teacherIdx;
+  bool deleted;
 
-  CourseInfo public courseInfo;
-
-  constructor(string memory courseName, uint id) {
-    courseInfo.name = courseName;
-    courseInfo.courseId = id;
-    courseInfo.available = true;
-  }
-
-  function getCourseInfo() public view returns (CourseInfo memory) {
-    return courseInfo;
+  constructor(string memory courseName, uint _id) {
+    name = courseName;
+    id = _id;
   }
 
   function getCourseName() public view returns (string memory) {
-    return courseInfo.name;
+    return name;
   }
 
   function getCourseId() public view returns (uint) {
-    return courseInfo.courseId;
+    return id;
   }
 
-  function isAvailabe() public view returns (bool) {
-    return courseInfo.available;
+  function exists() public view returns (bool) {
+    return !deleted;
   }
 
-  function getCourseTeachersIds() public view returns (uint[] memory teachers) {
+  function deleteSelf() public {
+    delete name;
+    delete id;
+    delete totalTeachers;
+    for (uint i = 0; i < teacherAddresses.length; i++)
+      delete teacherIdx[getTeacherAddress(i)];
+    delete teacherAddresses;
+  }
+
+  function addTeacher(address teacherAddress) public {
+    teacherAddresses.push(teacherAddress);
+    teacherIdx[teacherAddress] = teacherAddresses.length - 1;
+    totalTeachers++;
+  }
+
+  function deleteTeacher(address teacherAddress) public {
+    delete teacherAddresses[getTeacherIdx(teacherAddress)];
+    delete teacherIdx[teacherAddress];
+    totalTeachers--;
+  }
+
+  function getTeacherAddress(uint idx) internal view returns (address) {
+    return teacherAddresses[idx];
+  }
+
+  function getTeacherIdx(address teacherAddress) internal view returns (uint) {
+    return teacherIdx[teacherAddress];
+  }
+
+  function getCourseTeachersIds() public view returns (address[] memory teachers) {
     uint idx = 0;
-    for (uint i = 0; i < courseInfo.teacherIds.length; i++) {
-      if (courseInfo.teacherIds[i] != 0)
-        teachers[idx++] = courseInfo.teacherIds[i];
+    for (uint i = 0; i < teacherAddresses.length; i++) {
+      if (teacherAddresses[i] != address(0))
+        teachers[idx++] = teacherAddresses[i];
     }
-    // courseInfo.teacherIds = teachers;  // is this a good practice to remove zeroed teachers from teacherIds[] ?
   }
 }
