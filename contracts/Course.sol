@@ -65,4 +65,12 @@ contract Course {
         teachers[idx++] = teacherAddresses[i];
     }
   }
+
+  function makeAvailableForGroup(uint _groupId) public {
+    availableForGroup[_groupId] = true;
+  }
+
+  function makeUnavailableForGroup(uint _groupId) public {
+    availableForGroup[_groupId] = false;
+  }
 }

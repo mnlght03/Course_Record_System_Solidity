@@ -49,4 +49,12 @@ contract CourseList {
   function courseAvailableForGroup(uint _courseId, uint _groupId) public view returns (bool) {
     return getCourse(_courseId).availableForGroup(_groupId);
   }
+
+  function makeCourseAvailableForGroup(uint _courseId, uint _groupId) public {
+    list[getCourseIdx(_courseId)].makeAvailableForGroup(_groupId);
+  }
+
+  function makeCourseUnavailableForGroup(uint _courseId, uint _groupId) public {
+    list[getCourseIdx(_courseId)].makeUnavailableForGroup(_groupId);
+  }
 }
