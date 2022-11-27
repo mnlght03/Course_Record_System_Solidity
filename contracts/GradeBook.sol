@@ -9,7 +9,7 @@ contract GradeBook {
     bool attended;
   }
   // @dev date => courseId => student => Entry
-  mapping (uint => mapping (address => mapping (address => Entry))) entries;
+  mapping (uint => mapping (uint => mapping (address => Entry))) entries;
 
   // @dev student => course => total score
   mapping (address => mapping (uint => uint)) public totalScore;
@@ -23,16 +23,17 @@ contract GradeBook {
   // @dev student => course => total lessons attended
   mapping (address => mapping (uint => uint)) public totalAttended;
 
-  function getBook(uint course, address student, uint startDate, uint endDate) public returns (Entry[] result) {
+  function getBook(uint course, address student, uint startDate, uint endDate) public view returns (Entry[] memory result) {
     uint idx = 0;
     for (uint i = startDate; i < endDate; i++)
       result[idx++] = entries[i][course][student];
   }
 
-  function setGrade(uint date, uint courseId, address student, Grade _grade) public {
-    int difference = uint8(_grade) - entries[date][courseId][student];
-    entries[date][courseId][studentId].grade = _grade;
-    totalScore[student][courseId] += difference;
+  function setGrade(uint date, uint courseId, address student, uint _grade) public {
+    _grade > uint(entries[date][courseId][student].grade) ?
+            totalScore[student][courseId] += _grade - uint(entries[date][courseId][student].grade) :
+            totalScore[student][courseId] -= uint(entries[date][courseId][student].grade) - _grade;
+    entries[date][courseId][student].grade = Grade(_grade);
     totalMarks[student][courseId]++;
   }
 
