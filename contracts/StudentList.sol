@@ -13,6 +13,7 @@ contract StudentList {
     require(student != address(0));
     uint id = list.length + 1;
     list.push(new Student(student, id, group));
+    studentId[student] = id;
     totalStudents++;
   }
 
