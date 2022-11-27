@@ -3,7 +3,7 @@
 pragma solidity >=0.7.0 <0.9.0;
 
 contract GradeBook {
-  enum Grade { NONE, F, D, C, B, A, APLUS }
+  enum Grade { NONE, ONE, F, D, C, B, A, APLUS }
   struct Entry {
     Grade grade;
     bool attended;
@@ -39,6 +39,10 @@ contract GradeBook {
 
   function markAttendance(uint date, uint courseId, address student, bool status) public {
     entries[date][courseId][student].attended = status;
+  }
+
+  function rateAssignment(uint date, uint courseId, address student, uint8 _grade) public {
+    entries[date][courseId][student].grade = Grade(_grade);
   }
 
   function getAverageScore(address student, uint course) public view returns (uint) {
