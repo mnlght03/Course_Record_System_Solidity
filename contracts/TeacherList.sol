@@ -63,4 +63,19 @@ contract TeacherList {
     require(teacher != address(0));
     list[getTeacherIdx(teacher)].deleteGroupFromCourse(groupId, courseId);
   }
+
+  function getCourseTeacher(uint courseId, uint groupId) public view returns (address) {
+    for (uint i = 0; i < list.length; i++)
+      if(list[i].teachesCourseToGroup(courseId, groupId))
+        return list[i].getAddress();
+    return address(0);
+  }
+
+  function sendRequest(address student, address teacher, uint courseId) public {
+    list[getTeacherIdx(teacher)].pushRequest(student, courseId);
+  }
+
+  function deleteRequest(address teacher, address student, uint courseId) public {
+    list[getTeacherIdx(teacher)].deleteRequest(student, courseId);
+  }
 }

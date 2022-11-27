@@ -58,7 +58,7 @@ contract Course {
     return teacherIdx[teacherAddress];
   }
 
-  function getCourseTeachersIds() public view returns (address[] memory teachers) {
+  function getCourseTeachers() public view returns (address[] memory teachers) {
     uint idx = 0;
     for (uint i = 0; i < teacherAddresses.length; i++) {
       if (teacherAddresses[i] != address(0))

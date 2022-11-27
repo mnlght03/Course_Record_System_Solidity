@@ -10,7 +10,31 @@ contract Teacher is EducationUser {
   // @dev courseId => groupId => bool
   mapping (uint => mapping (uint => bool)) teachesToGroup;
 
+  struct Request {
+    address student;
+    uint courseId;
+  }
+
+  Request[] public courseRequests;
+  uint public totalRequests;
+
+  mapping (address => mapping (uint => uint)) requestId;
+
   constructor(address _addr, uint _id) EducationUser(_addr, _id) {}
+
+  function pushRequest(address student, uint courseId) public {
+    courseRequests.push(Request(student, courseId));
+    totalRequests++;
+    requestId[student][courseId] = courseRequests.length;
+  }
+
+  function deleteRequest(address student, uint courseId) public {
+    require(requestId[student][courseId] > 0, "Request doesn't exist");
+    uint idx = requestId[student][courseId] - 1;
+    delete courseRequests[idx];
+    if (--totalRequests == 0)
+      delete courseRequests;
+  }
 
   function teachesCourse(uint _courseId) public view returns (bool) {
     return isAttachedToCourse(_courseId);

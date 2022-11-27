@@ -52,6 +52,11 @@ contract Main {
     _;
   }
 
+  modifier onlyStudent() {
+    require(isStudent(msg.sender), "Only student can do this");
+    _;
+  }
+
   TeacherList public teacherList = new TeacherList();
   StudentList public studentList = new StudentList();
   CourseList public courseList = new CourseList();
@@ -185,6 +190,35 @@ contract Main {
     courseList.deleteCourse(_courseId);
     // TODO : delete course from all users
     emit CourseDeleted(msg.sender, _courseId, name);
+  }
+
+  event NewCourseRequest(address student, address teacher, uint courseId);
+  event RequestAccepted(address teacher, address student, uint courseId);
+  event RequestDeclined(address teacher, address student, uint courseId);
+
+  function requestToJoinCourse(uint courseId) onlyStudent public {
+    require(courseList.courseExists(courseId), "Course doesn't exist");
+    uint groupId = studentList.getStudentGroupId(msg.sender);
+    require(courseList.courseAvailableForGroup(courseId, groupId), "Course unavailable for group");
+    address teacher = teacherList.getCourseTeacher(courseId, groupId);
+    require(teacher != address(0), "Course teacher not found");
+    teacherList.sendRequest(msg.sender, teacher, courseId);
+    emit NewCourseRequest(student, teacher, courseId);
+  }
+
+  function acceptRequest(address student, uint courseId) onlyTeacher public {
+    require(student != address(0));
+    require(courseList.courseExists(courseId), "Course doesn't exist");
+    studentList.addStudentToCourse(student, courseId);
+    teacherList.deleteRequest(msg.sender, student, courseId);
+    emit RequestAccepted(msg.sender, student, courseId);
+  }
+
+  function declineRequest(address student, uint courseId) onlyTeacher public {
+    require(student != address(0));
+    require(courseList.courseExists(courseId), "Course doesn't exist");
+    teacherList.deleteRequest(msg.sender, student, courseId);
+    emit RequestDeclined(msg.sender, student, courseId);
   }
 
   event CourseAvailableForGroup(uint courseId, uint groupId);
