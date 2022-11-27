@@ -160,7 +160,7 @@ contract Main {
   function addStudentToCourse(address studentAddress, uint courseId) onlyAdminOrTeacher public {
     require(isStudent(studentAddress));
     require(courseList.courseExists(courseId));
-    require(courseList.getCourse(courseId).isAvailableForGroup(studentList.getStudentGroup(studentAddress)),
+    require(courseList.getCourse(courseId).availableForGroup(studentList.getStudentGroupId(studentAddress)),
             "Course is unavailable for this group");
     studentList.addStudentToCourse(studentAddress, courseId);
     emit StudentAddedToCourse(msg.sender, studentAddress, courseId);
@@ -187,11 +187,25 @@ contract Main {
     emit CourseDeleted(msg.sender, _courseId, name);
   }
 
+  event CourseAvailableForGroup(uint courseId, uint groupId);
+  event CourseUnavailableForGroup(uint courseId, uint groupId);
+
+  function makeCourseAvailableForGroup(uint courseId, uint groupId) onlyAdmin public {
+    require(courseList.courseExists(courseId));
+    courseList[getCourseIdx(courseId)].availableForGroup(groupId) = true;
+    emit CourseAvailableForGroup(courseId, groupId);
+  }
+
+  function makeCourseUnavailableForGroup(uint courseId, uint groupId) onlyAdmin public {
+    require(courseList.courseExists(courseId));
+    courseList[getCourseIdx(courseId)].availableForGroup(groupId) = false;
+    emit CourseUnavailableForGroup(courseId, groupId);
+  }
 
   TimeTable timeTable = new TimeTable();
   GradeBook gradeBook = new GradeBook();
 
-  function isNullAddress(address addr) internal bool returns (bool) {
+  function isNullAddress(address addr) internal pure returns (bool) {
     return addr == address(0);
   }
 

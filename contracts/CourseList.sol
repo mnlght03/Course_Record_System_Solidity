@@ -45,4 +45,8 @@ contract CourseList {
     delete list[getCourseIdx(id)];
     totalCourses--;
   }
+
+  function courseAvailableForGroup(uint _courseId, uint _groupId) public view returns (bool) {
+    return getCourse(_courseId).availableForGroup(_groupId);
+  }
 }

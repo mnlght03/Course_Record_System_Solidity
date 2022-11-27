@@ -9,6 +9,7 @@ contract Course {
   uint public totalTeachers;
   // @dev address => idx
   mapping (address => uint) teacherIdx;
+  mapping (uint => bool) public availableForGroup;
   bool deleted;
 
   constructor(string memory courseName, uint _id) {
