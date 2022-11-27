@@ -23,17 +23,35 @@ contract TimeTable {
     return table[day][time];
   }
 
-  function getTable(uint[] courses) public returns (uint8[7][9] entries) {
-    if (courses.length == 0)
-      return;
-    mapping (uint => bool) memory isIncluded;
-    for (uint i = 0; i < courses.length; i++)
-      isIncluded[courses[i]] = true;
+  function getWholeTable() public view returns (uint[7][9] memory) {
+    uint[7][9] memory entries;
     for (uint i = 0; i < 7; i++) {
       for (uint j = 1; j < 9; j++) {
-        if (isIncluded(getCourseId(DayOfTheWeek(i), NumberOfLesson(j))))
+        entries[i][j] = getCourseId(DayOfTheWeek(i), NumberOfLesson(j));
+      }
+    }
+    return entries;
+  }
+
+  function getTable(uint[] memory courses) public view returns (uint[7][9] memory) {
+    uint[7][9] memory entries;
+    if (courses.length == 0)
+      return entries;
+    for (uint i = 0; i < 7; i++) {
+      for (uint j = 1; j < 9; j++) {
+        entries[i][j] = 0;
+        if (isIncluded(getCourseId(DayOfTheWeek(i), NumberOfLesson(j)), courses))
           entries[i][j] = getCourseId(DayOfTheWeek(i), NumberOfLesson(j));
       }
     }
+    return entries;
+  }
+  
+  function isIncluded(uint courseId, uint[] memory courses) internal pure returns (bool) {
+    for (uint i = 0; i < courses.length; i++) {
+      if (courseId == courses[i])
+        return true;
+    }
+    return false;
   }
 }
