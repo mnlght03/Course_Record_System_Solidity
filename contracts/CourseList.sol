@@ -10,6 +10,10 @@ contract CourseList {
   // @dev name => id
   mapping (string => uint) courseId;
 
+  function getListLength() public view returns (uint) {
+    return list.length;
+  }
+
   function getCourseIdx(uint id) internal pure returns (uint) {
     require (id > 0);
     return id - 1;
