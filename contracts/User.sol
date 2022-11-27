@@ -38,8 +38,6 @@ contract EducationUser is User {
   mapping (uint => uint) courseIdx;
   constructor(address _addr, uint _id) User(_addr, _id) {}
 
-  // TODO: ADD EVENTS FOR ADDING AND DELETING COURSES (here or in main contract ?)
-
   function isAttachedToCourse(uint _courseId) internal view returns (bool) {
     return attachedCourses[_courseId];
   }
