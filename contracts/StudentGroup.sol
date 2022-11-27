@@ -2,26 +2,31 @@
 
 pragma solidity >=0.7.0 <0.9.0;
 
-import "./User.sol";
-
 contract StudentGroup {
-  uint id;
-  uint totalStudents;
-  uint[] studentIds;
-  // @dev id => idx
-  mapping (uint => uint) studentIdx;
-  // @dev courseId => teacherId
-  mapping (uint => uint) courseTeachers;
-  bool deleted;
+  uint public id;
+  uint public totalStudents;
+  address[] public students;
+  mapping (address => uint) public studentIdx;
+  // @dev courseId => teacher address
+  mapping (uint => address) public courseTeacher;
+  bool public deleted;
 
   constructor(uint _id) {
     id = _id;
   }
 
-  function addStudent(uint studentId) public {
-    studentIds.push(studentId);
-    studentIdx[studentId] = studentIds.length - 1;
+  function addStudent(address student) public {
+    require(student != address(0), "Student address is zero");
+    students.push(student);
     totalStudents++;
+    studentIdx[student] = students.length;
+  }
+
+  function deleteStudent(address student) public {
+    require(student != address(0), "Student address is zero");
+    delete students[studentIdx[student]];
+    delete studentIdx[student];
+    totalStudents--;
   }
 
   function exists() public view returns (bool) {
@@ -31,35 +36,24 @@ contract StudentGroup {
   function deleteSelf() public {
     delete id;
     delete totalStudents;
-    for (uint i = 0; i < studentIds.length; i++)
-      delete studentIdx[getStudentId(i)];
-    delete studentIds;
+    delete students;
     deleted = true;
   }
 
-  function deleteStudent(uint studentId) public {
-    delete studentIds[getStudentIdx(studentId)];
-    delete studentIdx[studentId];
-    totalStudents--;
+  function getStudentIdx(address student) internal view returns (uint) {
+    require(student != address(0), "Student address is zero");
+    return studentIdx[student];
   }
 
-  function getStudentId(uint idx) internal view returns (uint) {
-    return studentIds[idx];
+  function getCourseTeacherId(uint courseId) public view returns (address) {
+    return courseTeacher[courseId];
   }
 
-  function getStudentIdx(uint _id) internal view returns (uint) {
-    return studentIdx[_id];
-  }
-
-  function getCourseTeacherId(uint courseId) public view returns (uint) {
-    return courseTeachers[courseId];
-  }
-
-  function setCourseTeacher(uint courseId, uint teacherId) public {
-    courseTeachers[courseId] = teacherId;
+  function setCourseTeacher(uint courseId, address teacher) public {
+    courseTeacher[courseId] = teacher;
   }
 
   function deleteCourseTeacher(uint courseId) public {
-    delete courseTeachers[courseId];
+    delete courseTeacher[courseId];
   }
 }
