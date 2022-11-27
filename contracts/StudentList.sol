@@ -30,7 +30,7 @@ contract StudentList {
     return studentId[student] - 1;
   }
 
-  function getStudentByAddress(address student) internal view returns (Student) {
+  function getStudentByAddress(address student) public view returns (Student) {
     require(student != address(0));
     return list[getStudentIdx(student)];
   }
