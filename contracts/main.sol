@@ -8,6 +8,7 @@ import "./TeacherList.sol";
 import "./CourseList.sol";
 import "./TimeTable.sol";
 import "./GradeBook.sol";
+import "./GroupList.sol";
 
 contract Main {
   enum Roles{ NONE, SUPERADMIN, ADMIN, TEACHER, STUDENT }
@@ -15,13 +16,13 @@ contract Main {
   AdminList adminList = new AdminList();
   constructor() {
     roles[msg.sender] = Roles.SUPERADMIN;
-    adminList.addAdmin(new Administrator(msg.sender, 0));
+    adminList.addAdmin(msg.sender);
   }
 
-  function isSuperAdmin(address _addr) public pure returns (bool) {
+  function isSuperAdmin(address _addr) public view returns (bool) {
     return roles[_addr] == Roles.SUPERADMIN;
   }
-  function isAdmin(address _addr) public pure returns (bool) {
+  function isAdmin(address _addr) public view returns (bool) {
     return roles[_addr] == Roles.ADMIN || roles[_addr] == Roles.SUPERADMIN;
   }
   function isTeacher(address _addr) public view returns (bool) {
@@ -60,6 +61,7 @@ contract Main {
   TeacherList public teacherList = new TeacherList();
   StudentList public studentList = new StudentList();
   CourseList public courseList = new CourseList();
+  GroupList public groupList = new GroupList();
 
   event NewAdmin(address initiator, address newAdminAddr);
   event AdminDeleted(address initiator, address deletedAddr);
@@ -74,8 +76,21 @@ contract Main {
   function deleteAdmin(address adminAddr) onlySuperAdmin public {
     require(isAdmin(adminAddr));
     roles[adminAddr] = Roles.NONE;
-    delete admins[getAdminByAddress(adminAddr).getId()];
+    adminList.deleteAdmin(adminAddr);
     emit AdminDeleted(msg.sender, adminAddr);
+  }
+
+  event NewGroup(address initiator, uint groupId);
+  event GroupDeleted(address initiator, uint groupId);
+
+  function addGroup(uint groupId) onlyAdmin public {
+    groupList.addGroup(groupId);
+    emit NewGroup(msg.sender, groupId);
+  }
+
+  function deleteGroup(uint groupId) onlyAdmin public {
+    groupList.deleteGroup(groupId);
+    emit GroupDeleted(msg.sender, groupId);
   }
 
   event NewTeacher(address initiator, address newTeacherAddr);
@@ -106,9 +121,9 @@ contract Main {
 
   function unassignTeacherFromCourse(address teacherAddress, uint _courseId) onlyAdmin public {
     require(isTeacher(teacherAddress));
-    require(teacherList.getTeacherByAddres(teacherAddress).teachesCourse(_courseId));
+    require(teacherList.getTeacherByAddress(teacherAddress).teachesCourse(_courseId));
     teacherList.unassignTeacherFromCourse(teacherAddress, _courseId);
-    emit TeacherUnassignedToCourse(msg.sender, teacherAddress, _courseId);
+    emit TeacherUnassignedFromCourse(msg.sender, teacherAddress, _courseId);
   }
 
   event GroupAssignedToTeacher(address initiator, uint groupId, uint courseId, address teacherAddress);
@@ -116,18 +131,20 @@ contract Main {
 
   function assignGroupToCourseTeacher(uint _groupId, uint _courseId, address teacherAddress) onlyAdmin public {
     require(isTeacher(teacherAddress));
-    require(groupExists(_groupId));
+    require(groupList.groupExists(_groupId));
     require(courseList.courseExists(_courseId));
     teacherList.assignGroupToCourseTeacher(teacherAddress, _groupId, _courseId);
+    groupList.setCourseTeacher(_groupId, _courseId, teacherAddress);
     emit GroupAssignedToTeacher(msg.sender, _groupId, _courseId, teacherAddress);
   }
 
   function unassignGroupFromCourseTeacher(uint _groupId, uint _courseId, address teacherAddress) onlyAdmin public {
     require(isTeacher(teacherAddress));
-    require(groupExists(_groupId));
+    require(groupList.groupExists(_groupId));
     require(courseList.courseExists(_courseId));
-    require(teacherList.getTeacherByAddres(teacherAddress).teachesCourseToGroup(_courseId, _groupId));
+    require(teacherList.getTeacherByAddress(teacherAddress).teachesCourseToGroup(_courseId, _groupId));
     teacherList.unassignGroupFromCourseTeacher(teacherAddress, _groupId, _courseId);
+    groupList.deleteCourseTeacher(_groupId, _courseId);
     emit GroupUnassignedFromTeacher(msg.sender, _groupId, _courseId, teacherAddress);
   }
 
@@ -136,10 +153,10 @@ contract Main {
 
   function addStudent(address newStudentAddr, uint _groupId) onlyAdmin public {
     require(newStudentAddr != address(0));
-    require(groupExists(_groupId));
+    require(groupList.groupExists(_groupId));
     roles[newStudentAddr] = Roles.STUDENT;
-    studentList.addStudent(newStundetAddr, _groupId);
-    emit NewStudent(msg.sender, newStudentAddr);
+    studentList.addStudent(newStudentAddr, _groupId);
+    emit NewStudent(msg.sender, newStudentAddr, _groupId);
   }
 
   function deleteStudent(address studentAddress) onlyAdmin public {
@@ -156,6 +173,8 @@ contract Main {
     require(isStudent(studentAddress));
     uint oldGroup = studentList.getStudentGroupId(studentAddress);
     studentList.changeStudentGroup(studentAddress, newGroup);
+    groupList.deleteStudent(studentAddress, oldGroup);
+    groupList.addStudent(studentAddress, newGroup);
     emit ChangedStudentGroup(msg.sender, studentAddress, oldGroup, newGroup);
   }
 
@@ -177,7 +196,7 @@ contract Main {
     emit StudentDeletedFromCourse(msg.sender, studentAddress, courseId);
   }
 
-  event NewCourse(address initiator, uint courseId, uint courseName);
+  event NewCourse(address initiator, uint courseId, string courseName);
   event CourseDeleted(address initiator, uint courseId, string courseName);
 
   function addCourse(string memory courseName) onlyAdmin public {
@@ -203,7 +222,7 @@ contract Main {
     address teacher = teacherList.getCourseTeacher(courseId, groupId);
     require(teacher != address(0), "Course teacher not found");
     teacherList.sendRequest(msg.sender, teacher, courseId);
-    emit NewCourseRequest(student, teacher, courseId);
+    emit NewCourseRequest(msg.sender, teacher, courseId);
   }
 
   function acceptRequest(address student, uint courseId) onlyTeacher public {
@@ -226,13 +245,13 @@ contract Main {
 
   function makeCourseAvailableForGroup(uint courseId, uint groupId) onlyAdmin public {
     require(courseList.courseExists(courseId));
-    courseList[getCourseIdx(courseId)].availableForGroup(groupId) = true;
+    courseList.makeCourseAvailableForGroup(courseId, groupId);
     emit CourseAvailableForGroup(courseId, groupId);
   }
 
   function makeCourseUnavailableForGroup(uint courseId, uint groupId) onlyAdmin public {
     require(courseList.courseExists(courseId));
-    courseList[getCourseIdx(courseId)].availableForGroup(groupId) = false;
+    courseList.makeCourseUnavailableForGroup(courseId, groupId);
     emit CourseUnavailableForGroup(courseId, groupId);
   }
 
@@ -246,68 +265,76 @@ contract Main {
   function courseApprovedForTimetable(uint courseId, address studentAddress, address teacherAddress) internal view returns (bool) {
     return (isNullAddress(studentAddress) && isNullAddress(teacherAddress) ||
             isNullAddress(studentAddress) &&
-            teacherList.getTeacherByAddres(teacherAddress).teachesCourse(courseId) ||
+            teacherList.getTeacherByAddress(teacherAddress).teachesCourse(courseId) ||
             isNullAddress(teacherAddress) &&
             studentList.getStudentByAddress(studentAddress).studiesCourse(courseId) ||
             studentList.getStudentByAddress(studentAddress).studiesCourse(courseId) &&
-            teacherList.getTeacherByAddres(teacherAddress).teachesCourse(courseId));
+            teacherList.getTeacherByAddress(teacherAddress).teachesCourse(courseId));
   }
 
   // @dev specify id = 0 to show for all ids
-  function getTimeTable(uint courseId, address studentAddress, address teacherAddress) public view returns (uint[7][9]) {
+  function getTimeTable(uint courseId, address studentAddress, address teacherAddress) public view returns (uint[7][9] memory) {
     require(courseId == 0 || courseList.courseExists(courseId), "Course doesn't exist");
     require(studentAddress == address(0) || isStudent(studentAddress));
     require(teacherAddress == address(0) || isTeacher(teacherAddress));
     uint[] memory courses;
-    if (courseId != 0 && courseApprovedForTimetable(courseId, studentAddress, teacherAddress)) {
-          courses.push(courseId);
+    uint coursesIdx = 0;
+    uint[7][9] memory res;
+    if (courseId != 0) {
+      if (courseApprovedForTimetable(courseId, studentAddress, teacherAddress))
+        courses[coursesIdx++] = courseId;
+      else
+        return res; // empty array
     }
-    else {
-      for (uint i = 0; i < courseList.list().length; i++) {
-        if (courseList[i].exists() && courseApprovedForTimetable(courseList[i]))
-          courses.push(courseList[i].getId());
+    else if (studentAddress != address(0) || teacherAddress != address(0)) {
+      for (uint i = 0; i < courseList.getListLength(); i++) {
+        uint id = i + 1;
+        if (courseList.courseExists(id) && courseApprovedForTimetable(id, studentAddress, teacherAddress))
+          courses[coursesIdx++] = id;
       }
+      res =  timeTable.getTable(courses);
     }
-    return timeTable.getTable(courses);
+    else 
+      res = timeTable.getWholeTable();
+    return res;
   }
 
-  function getGradeBook(uint courseId, address studentAddress, address teacherAddress, uint startDate, uint endDate) public view {
+  function getGradeBook(uint courseId, address studentAddress, uint startDate, uint endDate) public view returns (GradeBook.Entry[] memory) {
     require(courseId == 0 || courseList.courseExists(courseId), "Course doesn't exist");
-    require(studentAddress == address(0) || isStudent(studentAddress));
-    require(teacherAddress == address(0) || isTeacher(teacherAddress));
+    require(studentAddress == address(0) || isStudent(studentAddress), "Address is not a student address");
     require(startDate <= endDate);
-    gradeBook.getBook(courseId, studentAddress, teacherAddress, startDate, endDate);
+    return gradeBook.getBook(courseId, studentAddress, startDate, endDate);
   }
 
   function getAverageScore(uint courseId, address studentAddress) public view returns (uint) {
     require(courseList.courseExists(courseId), "Course doesn't exist");
     require(isStudent(studentAddress));
-    return gradeBook.getAverageScore(courseId, studentAddress);
+    return gradeBook.getAverageScore(studentAddress, courseId);
   }
 
   function getAverageAttendance(uint courseId, address studentAddress) public view returns (uint) {
     require(courseList.courseExists(courseId), "Course doesn't exist");
     require(isStudent(studentAddress));
-    return gradeBook.getAverageAttendance(courseId, studentAddress);
+    return gradeBook.getAverageAttendance(studentAddress, courseId);
   }
 
-  event CourseInsertedInTimeTable(address initiator, uint courseId, string day, string numberOfLesson);
-  event CourseDeletedFromTimeTable(address initiator, uint courseId, string day, string numberOfLesson);
-  event ChangedCourseInTimeTable(address inititator, uint oldCourse, uint newCourse, string day, string numberOfLesson);
+  event CourseInsertedInTimeTable(address initiator, uint courseId, uint8 day, uint8 numberOfLesson);
+  event CourseDeletedFromTimeTable(address initiator, uint courseId, uint8 day, uint8 numberOfLesson);
+  event ChangedCourseInTimeTable(address inititator, uint oldCourse, uint newCourse, uint8 day, uint8 numberOfLesson);
 
-  function insertCourseInTimetable(uint courseId, string calldata day, string calldata numberOfLesson) onlyAdmin public {
+  function insertCourseInTimetable(uint courseId, uint8 day, uint8 numberOfLesson) onlyAdmin public {
     require(courseList.courseExists(courseId));
     timeTable.insertCourse(courseId, day, numberOfLesson);
     emit CourseInsertedInTimeTable(msg.sender, courseId, day, numberOfLesson);
   }
 
-  function deleteCourseFromTimetable(string calldata day, string calldata numberOfLesson) onlyAdmin public {
+  function deleteCourseFromTimetable(uint8 day, uint8 numberOfLesson) onlyAdmin public {
     uint courseId = timeTable.getCourseId(day, numberOfLesson);
-    timeTable.deleteCourse(courseId, day, numberOfLesson);
-    emit CourseDeletedFromTimetable(msg.sender, courseId, day, numberOfLesson);
+    timeTable.deleteCourse(day, numberOfLesson);
+    emit CourseDeletedFromTimeTable(msg.sender, courseId, day, numberOfLesson);
   }
 
-  function changeCourseInTimetable(string calldata day, string calldata numberOfLesson, uint newCourse) onlyAdmin public {
+  function changeCourseInTimetable(uint8 day, uint8 numberOfLesson, uint newCourse) onlyAdmin public {
     require(courseList.courseExists(newCourse));
     uint oldCourse = timeTable.getCourseId(day, numberOfLesson);
     timeTable.insertCourse(newCourse, day, numberOfLesson);
@@ -318,16 +345,16 @@ contract Main {
   event AssignmentRated(address teacher, address student, uint courseId, uint date, uint8 grade);
 
   function markAttendance(uint date, uint courseId, address studentAddress, bool status) onlyTeacher public {
-    require(teacherList.getTeacherByAddres(msg.sender).teachesCourse(courseId));
-    require(studentList.getStudentByAddress(studentAddress).studiesCourse(studentId));
+    require(teacherList.getTeacherByAddress(msg.sender).teachesCourse(courseId));
+    require(studentList.getStudentByAddress(studentAddress).studiesCourse(courseId));
     gradeBook.markAttendance(date, courseId, studentAddress, status);
     emit MarkedAttendance(msg.sender, studentAddress, courseId, date, status);
   }
 
-  function rateAssignment(uint date, uint courseId, address studentAddress, string calldata grade) onlyTeacher public {
-    require(teacherList.getTeacherByAddres(msg.sender).teachesCourse(courseId));
+  function rateAssignment(uint date, uint courseId, address studentAddress, uint8 grade) onlyTeacher public {
+    require(teacherList.getTeacherByAddress(msg.sender).teachesCourse(courseId));
     require(studentList.getStudentByAddress(studentAddress).studiesCourse(courseId));
-    gradeBook.rateAssignment(studentAddress, date, gradeBook.stringToGrade(grade));
+    gradeBook.rateAssignment(date, courseId, studentAddress, grade);
     emit AssignmentRated(msg.sender, studentAddress, courseId, date, grade);
   }
 }
