@@ -22,8 +22,4 @@ contract Student is EducationUser {
   function setGroupId(uint _groupId) public {
     groupId = _groupId;
   }
-
-  // function requestToJoinCourse(uint _courseId) public {
-
-  // }
 }
