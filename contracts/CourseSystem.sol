@@ -10,7 +10,7 @@ import "./TimeTable.sol";
 import "./GradeBook.sol";
 import "./GroupList.sol";
 
-contract Main {
+contract CourseSystem {
   enum Roles{ NONE, SUPERADMIN, ADMIN, TEACHER, STUDENT }
   mapping (address => Roles) roles;
   AdminList adminList = new AdminList();
