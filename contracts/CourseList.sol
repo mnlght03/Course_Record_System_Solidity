@@ -8,21 +8,21 @@ contract CourseList {
   Course[] public list;
   uint public totalCourses;
   // @dev name => id
-  mapping (string => uint) courseId;
+  mapping (string => uint) public courseId;
 
   function getListLength() public view returns (uint) {
     return list.length;
   }
 
-  function getCourseIdx(uint id) internal pure returns (uint) {
-    require (id > 0);
+  function getCourseIdx(uint id) internal view returns (uint) {
+    require(courseExists(id), "getCourseIdx: Course doesn't exist");
     return id - 1;
   }
 
   function courseExists(uint id) public view returns (bool) {
-    if (id == 0)
+    if (id == 0 || id > list.length)
       return false;
-    return list[getCourseIdx(id)].exists();
+    return address(list[id - 1]) != address(0);
   }
 
   function getCourse(uint id) public view returns (Course) {
@@ -40,12 +40,13 @@ contract CourseList {
   function addCourse(string calldata name) public {
     uint id = list.length + 1;
     list.push(new Course(name, id));
+    courseId[name] = id;
     totalCourses++;
   }
 
   function deleteCourse(uint id) public {
-    require (courseExists(id));
-    list[getCourseIdx(id)].deleteSelf();
+    require(courseExists(id), "deleteCourse: Course doesn't exist");
+    delete courseId[getCourseName(id)];
     delete list[getCourseIdx(id)];
     totalCourses--;
   }
@@ -55,10 +56,22 @@ contract CourseList {
   }
 
   function makeCourseAvailableForGroup(uint _courseId, uint _groupId) public {
+    require(courseExists(_courseId), "makeCourseAvailableForGroup: Course doesn't exist");
     list[getCourseIdx(_courseId)].makeAvailableForGroup(_groupId);
   }
 
   function makeCourseUnavailableForGroup(uint _courseId, uint _groupId) public {
+    require(courseExists(_courseId), "makeCourseUnavailableForGroup: Course doesn't exist");
     list[getCourseIdx(_courseId)].makeUnavailableForGroup(_groupId);
+  }
+
+  function addTeacher(uint _courseId, address teacher) public {
+    require(courseExists(_courseId), "addTeacher: course doesn't exist");
+    list[getCourseIdx(_courseId)].addTeacher(teacher);
+  }
+
+  function deleteTeacher(uint _courseId, address teacher) public {
+    require(courseExists(_courseId), "addTeacher: course doesn't exist");
+    list[getCourseIdx(_courseId)].deleteTeacher(teacher);
   }
 }
