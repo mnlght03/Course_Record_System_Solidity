@@ -9,7 +9,7 @@ contract GradeBook {
     bool attended;
   }
   // @dev date => courseId => student => Entry
-  mapping (uint => mapping (uint => mapping (address => Entry))) entries;
+  mapping (uint => mapping (uint => mapping (address => Entry))) public entries;
 
   // @dev student => course => total score
   mapping (address => mapping (uint => uint)) public totalScore;
@@ -29,20 +29,41 @@ contract GradeBook {
       result[idx++] = entries[i][course][student];
   }
 
+  function max(uint a, uint b) internal pure returns (uint) {
+    return a > b ? a : b;
+  }
+
+  function min(uint a, uint b) internal pure returns (uint) {
+    return a < b ? a : b;
+  }
+
   function setGrade(uint date, uint courseId, address student, uint _grade) public {
-    _grade > uint(entries[date][courseId][student].grade) ?
-            totalScore[student][courseId] += _grade - uint(entries[date][courseId][student].grade) :
-            totalScore[student][courseId] -= uint(entries[date][courseId][student].grade) - _grade;
+    uint diff = max(_grade, uint(entries[date][courseId][student].grade)) - min(_grade, uint(entries[date][courseId][student].grade));
+    if (max(_grade, uint(entries[date][courseId][student].grade)) == _grade)
+      totalScore[student][courseId] += diff;
+    else
+      totalScore[student][courseId] -= diff;
     entries[date][courseId][student].grade = Grade(_grade);
-    totalMarks[student][courseId]++;
+    if (diff == _grade)
+      totalMarks[student][courseId]++;
+  }
+
+  function increaseTotalLessons(address student, uint courseId) public {
+    require(student != address(0), "Student address is zero");
+    require(courseId > 0, "Course id cannot be zero");
+    totalLessons[student][courseId]++;
+  }
+
+  function decreaseTotalLessons(address student, uint courseId) public {
+    require(student != address(0), "Student address is zero");
+    require(courseId > 0, "Course id cannot be zero");
+    if (totalLessons[student][courseId] > 0)
+      totalLessons[student][courseId]--;
   }
 
   function markAttendance(uint date, uint courseId, address student, bool status) public {
     entries[date][courseId][student].attended = status;
-  }
-
-  function rateAssignment(uint date, uint courseId, address student, uint8 _grade) public {
-    entries[date][courseId][student].grade = Grade(_grade);
+    totalAttended[student][courseId]++;
   }
 
   function getAverageScore(address student, uint course) public view returns (uint) {

@@ -356,7 +356,7 @@ contract CourseSystem {
   function rateAssignment(uint date, uint courseId, address studentAddress, uint8 grade) onlyTeacher public {
     require(teacherList.getTeacherByAddress(msg.sender).teachesCourse(courseId));
     require(studentList.getStudentByAddress(studentAddress).studiesCourse(courseId));
-    gradeBook.rateAssignment(date, courseId, studentAddress, grade);
+    gradeBook.setGrade(date, courseId, studentAddress, grade);
     emit AssignmentRated(msg.sender, studentAddress, courseId, date, grade);
   }
 }

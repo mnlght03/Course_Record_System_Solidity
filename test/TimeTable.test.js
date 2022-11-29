@@ -32,13 +32,30 @@ describe("TimeTable", () => {
     await timeTable.insertCourse(4, 4, 4);
     await timeTable.insertCourse(5, 5, 5);
     await timeTable.insertCourse(5, 6, 7);
-    // let table = await timeTable.getWholeTable();
     expect(await timeTable.getWholeTable())
            .to.equal([[0, 0, 0, 0, 0, 0, 0, 0, 0],
                       [0, 2, 1, 1, 0, 0, 0, 0, 0],
                       [0, 0, 3, 0, 0, 0, 0, 0, 0],
                       [0, 0, 0, 3, 0, 0, 0, 0, 0],
                       [0, 0, 0, 0, 4, 0, 0, 0, 0],
+                      [0, 0, 0, 0, 0, 5, 0, 0, 0],
+                      [0, 0, 0, 0, 0, 0, 0, 5, 0]]);
+  });
+  it("getTable test", async () => {
+    await timeTable.insertCourse(1, 1, 2);
+    await timeTable.insertCourse(1, 1, 3);
+    await timeTable.insertCourse(2, 1, 1);
+    await timeTable.insertCourse(3, 2, 2);
+    await timeTable.insertCourse(3, 3, 3);
+    await timeTable.insertCourse(4, 4, 4);
+    await timeTable.insertCourse(5, 5, 5);
+    await timeTable.insertCourse(5, 6, 7);
+    expect(await timeTable.getTable([3, 5]))
+           .to.equal([[0, 0, 0, 0, 0, 0, 0, 0, 0],
+                      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                      [0, 0, 3, 0, 0, 0, 0, 0, 0],
+                      [0, 0, 0, 3, 0, 0, 0, 0, 0],
+                      [0, 0, 0, 0, 0, 0, 0, 0, 0],
                       [0, 0, 0, 0, 0, 5, 0, 0, 0],
                       [0, 0, 0, 0, 0, 0, 0, 5, 0]]);
   });
