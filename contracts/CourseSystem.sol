@@ -273,13 +273,15 @@ contract CourseSystem {
   }
 
   // @dev specify id = 0 to show for all ids
-  function getTimeTable(uint courseId, address studentAddress, address teacherAddress) public view returns (uint[7][9] memory) {
+  function getTimeTable(uint courseId, address studentAddress, address teacherAddress) public view returns (uint[][] memory) {
     require(courseId == 0 || courseList.courseExists(courseId), "Course doesn't exist");
     require(studentAddress == address(0) || isStudent(studentAddress));
     require(teacherAddress == address(0) || isTeacher(teacherAddress));
     uint[] memory courses;
     uint coursesIdx = 0;
-    uint[7][9] memory res;
+    uint[][] memory res = new uint[][](7);
+    for (uint i = 0; i < 7; i++)
+      res[i] = new uint[](9);
     if (courseId != 0) {
       if (courseApprovedForTimetable(courseId, studentAddress, teacherAddress))
         courses[coursesIdx++] = courseId;
@@ -292,7 +294,7 @@ contract CourseSystem {
         if (courseList.courseExists(id) && courseApprovedForTimetable(id, studentAddress, teacherAddress))
           courses[coursesIdx++] = id;
       }
-      res =  timeTable.getTable(courses);
+      res = timeTable.getTable(courses);
     }
     else 
       res = timeTable.getWholeTable();
