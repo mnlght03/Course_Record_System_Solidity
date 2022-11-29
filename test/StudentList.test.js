@@ -28,7 +28,7 @@ describe("StudentList", function() {
     await studentList.addStudent(student1.address, 21201);
     expect(await studentList.getStudentIdx(student1.address)).to.equal(0);
   });
-  it("deleteStudent test: student be deleted", async function() {
+  it("deleteStudent test: student should be deleted", async function() {
     await studentList.addStudent(student1.address, 21201);
     await studentList.deleteStudent(student1.address);
     expect(await studentList.studentId(student1.address)).to.equal(0);
@@ -38,7 +38,7 @@ describe("StudentList", function() {
     await studentList.deleteStudent(student1.address);
     expect(await studentList.list(0)).to.equal(ethers.constants.AddressZero);
   });
-  it("deleteSudent test: non-existent student, transaction should be reverted", async function() {
+  it("deleteStudent test: non-existent student, transaction should be reverted", async function() {
     await expect(studentList.deleteStudent(student1.address)).to.be.revertedWith("Student doesn't exist");
   });
   it("changeStudentGroup test", async function() {
