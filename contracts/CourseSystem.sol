@@ -12,7 +12,7 @@ import "./GroupList.sol";
 
 contract CourseSystem {
   enum Roles{ NONE, SUPERADMIN, ADMIN, TEACHER, STUDENT }
-  mapping (address => Roles) roles;
+  mapping (address => Roles) public roles;
   AdminList adminList = new AdminList();
   constructor() {
     roles[msg.sender] = Roles.SUPERADMIN;
