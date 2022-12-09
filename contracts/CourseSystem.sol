@@ -74,7 +74,7 @@ contract CourseSystem {
   }
 
   function deleteAdmin(address adminAddr) onlySuperAdmin public {
-    require(isAdmin(adminAddr));
+    require(isAdmin(adminAddr), "Address is not an admin");
     roles[adminAddr] = Roles.NONE;
     adminList.deleteAdmin(adminAddr);
     emit AdminDeleted(msg.sender, adminAddr);
