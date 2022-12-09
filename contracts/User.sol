@@ -24,6 +24,7 @@ contract EducationUser is User {
   uint[] public courseIds;
   uint public totalCourses;
   mapping (uint => bool) attachedCourses;
+  // @dev courseId => courseIdx
   mapping (uint => uint) courseIdx;
   constructor(address _addr, uint _id) User(_addr, _id) {}
 
@@ -39,8 +40,9 @@ contract EducationUser is User {
   }
 
   function deleteCourse(uint _courseId) public {
-    require(isAttachedToCourse(_courseId));
+    require(isAttachedToCourse(_courseId), "User is not attached to this course");
     delete courseIds[getCourseIdx(_courseId)];
+    delete courseIdx[_courseId];
     attachedCourses[_courseId] = false;
     totalCourses--;
   }

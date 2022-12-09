@@ -31,6 +31,12 @@ contract StudentList {
     totalStudents--;
   }
 
+  function deleteCourse(uint _courseId) public {
+    for (uint i = 0; i < list.length; i++)
+      if(list[i].studiesCourse(_courseId))
+        list[i].deleteCourse(_courseId);
+  }
+
   function getStudentIdx(address student) public view returns (uint) {
     require(studentExists(student), "Student doesn't exist");
     return studentId[student] - 1;

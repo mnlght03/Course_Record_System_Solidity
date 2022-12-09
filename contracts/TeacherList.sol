@@ -30,6 +30,13 @@ contract TeacherList {
     totalTeachers--;
   }
 
+  function deleteCourse(uint _courseId) public {
+    for (uint i = 0; i < list.length; i++)
+      if(list[i].teachesCourse(_courseId))
+        list[i].deleteCourse(_courseId);
+  }
+
+
   function getTeacherById(uint _teacherId) public view returns (Teacher) {
     require(_teacherId > 0 && _teacherId <= list.length, "Teacher doesn't exist");
     return list[_teacherId - 1];

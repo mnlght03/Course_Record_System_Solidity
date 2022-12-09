@@ -7,23 +7,54 @@ contract TimeTable {
   enum NumberOfLesson { NONE, FIRST, SECOND, THIRD, FOURTH, FIFTH, SIXTH, SEVENTH, EIGHTH }
 
   mapping (DayOfTheWeek => mapping (NumberOfLesson => uint)) public table;
-  mapping (uint => mapping (DayOfTheWeek => NumberOfLesson)) public courseEntry;
+  mapping (uint => mapping (DayOfTheWeek => NumberOfLesson[])) public courseEntries;
 
   constructor() {}
 
-  function insertCourse(uint _courseId, uint8 day, uint8 numberOfLesson) public {
+  function insertCourse(uint _courseId, uint day, uint numberOfLesson) public {
+    require(day <= uint(DayOfTheWeek.SATURDAY), "day exceeds enum length");
+    require(numberOfLesson <= uint(NumberOfLesson.EIGHTH), "numberOfLesson exceeds enum length");
     require(_courseId > 0, "CourseId should be greater than zero");
     table[DayOfTheWeek(day)][NumberOfLesson(numberOfLesson)] = _courseId;
-    courseEntry[_courseId][DayOfTheWeek(day)] = NumberOfLesson(numberOfLesson);
+    courseEntries[_courseId][DayOfTheWeek(day)].push(NumberOfLesson(numberOfLesson));
   }
 
-  function deleteCourse(uint8 day, uint8 numberOfLesson) public {
+  function deleteCourse(uint _courseId) public {
+    for (uint i = 0; i < uint(DayOfTheWeek.SATURDAY); i++) {
+      for (uint j = 0; j < courseEntries[_courseId][DayOfTheWeek(i)].length; j++) {
+        NumberOfLesson numberOfLesson = courseEntries[_courseId][DayOfTheWeek(i)][j];
+        delete table[DayOfTheWeek(i)][numberOfLesson];
+      }
+      delete courseEntries[_courseId][DayOfTheWeek(i)];
+    }
+  }
+
+  function deleteEntity(uint day, uint numberOfLesson) public {
+    require(day <= uint(DayOfTheWeek.SATURDAY), "day exceeds enum length");
+    require(numberOfLesson <= uint(NumberOfLesson.EIGHTH), "numberOfLesson exceeds enum length");
     uint course = table[DayOfTheWeek(day)][NumberOfLesson(numberOfLesson)];
     delete table[DayOfTheWeek(day)][NumberOfLesson(numberOfLesson)];
-    delete courseEntry[course][DayOfTheWeek(day)];
+    bool noMoreEntries = true;
+    for (uint i = 0; i < courseEntries[course][DayOfTheWeek(day)].length; i++) {
+      if (i == numberOfLesson) {
+        courseEntries[course][DayOfTheWeek(day)][i] = NumberOfLesson.NONE;
+        continue;
+      }
+      if (courseEntries[course][DayOfTheWeek(day)][i] != NumberOfLesson.NONE) {
+        noMoreEntries = false;
+        if (i < numberOfLesson)
+          continue;
+        else 
+          break;
+      }
+    }
+    if (noMoreEntries)
+      delete courseEntries[course][DayOfTheWeek(day)];
   }
 
-  function getCourseId(uint8 day, uint8 numberOfLesson) public view returns (uint) {
+  function getCourseId(uint day, uint numberOfLesson) public view returns (uint) {
+    require(day <= uint(DayOfTheWeek.SATURDAY), "day exceeds enum length");
+    require(numberOfLesson <= uint(NumberOfLesson.EIGHTH), "numberOfLesson exceeds enum length");
     return table[DayOfTheWeek(day)][NumberOfLesson(numberOfLesson)];
   }
 

@@ -38,6 +38,7 @@ contract GradeBook {
   }
 
   function setGrade(uint date, uint courseId, address student, uint _grade) public {
+    require(_grade <= uint(Grade.APLUS), "grade value exceeds enum length");
     uint diff = max(_grade, uint(entries[date][courseId][student].grade)) - min(_grade, uint(entries[date][courseId][student].grade));
     if (max(_grade, uint(entries[date][courseId][student].grade)) == _grade)
       totalScore[student][courseId] += diff;

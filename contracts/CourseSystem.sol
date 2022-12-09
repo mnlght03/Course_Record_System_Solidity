@@ -227,7 +227,9 @@ contract CourseSystem {
   function deleteCourse(uint _courseId) onlyAdmin public {
     string memory name = courseList.getCourseName(_courseId);
     courseList.deleteCourse(_courseId);
-    // TODO : delete course from all users
+    teacherList.deleteCourse(_courseId);
+    studentList.deleteCourse(_courseId);
+    timeTable.deleteCourse(_courseId);
     emit CourseDeleted(msg.sender, _courseId, name);
   }
 
@@ -356,7 +358,7 @@ contract CourseSystem {
 
   function deleteCourseFromTimetable(uint8 day, uint8 numberOfLesson) onlyAdmin public {
     uint courseId = timeTable.getCourseId(day, numberOfLesson);
-    timeTable.deleteCourse(day, numberOfLesson);
+    timeTable.deleteEntity(day, numberOfLesson);
     emit CourseDeletedFromTimeTable(msg.sender, courseId, day, numberOfLesson);
   }
 
