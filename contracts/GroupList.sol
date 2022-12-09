@@ -8,16 +8,21 @@ contract GroupList {
   StudentGroup[] public list;
   uint public totalGroups;
   mapping (uint => uint) public groupIdx;
+  // dev groupId => status
+  mapping (uint => bool) public exists;
 
   function groupExists(uint groupId) public view returns (bool) {
-    return (list[groupIdx[groupId]].id() == groupId && list[groupIdx[groupId]].exists());
+    return (groupIdx[groupId] < list.length &&
+            list[groupIdx[groupId]].id() == groupId &&
+            exists[groupId]);
   }
 
   function addGroup(uint groupId) public {
     require(!groupExists(groupId), "addGroup: Group already exists");
     list.push(new StudentGroup(groupId));
     totalGroups++;
-    groupIdx[groupId] = list.length;
+    groupIdx[groupId] = list.length - 1;
+    exists[groupId] = true;
   }
 
   function deleteGroup(uint groupId) public {
@@ -25,6 +30,7 @@ contract GroupList {
     delete list[groupIdx[groupId]];
     delete groupIdx[groupId];
     totalGroups--;
+    exists[groupId] = false;
   }
 
   function addStudent(address student, uint groupId) public {

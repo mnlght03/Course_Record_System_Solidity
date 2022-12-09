@@ -2,7 +2,7 @@
 
 pragma solidity >=0.7.0 <0.9.0;
 
-import "./Admin.sol";
+import "./Administrator.sol";
 
 contract AdminList {
   Administrator[] public admins;

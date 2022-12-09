@@ -26,7 +26,6 @@ contract StudentList {
 
   function deleteStudent(address student) public {
     require(studentExists(student), "Student doesn't exist");
-    list[getStudentIdx(student)].deleteSelf();
     delete list[getStudentIdx(student)];
     delete studentId[student];
     totalStudents--;

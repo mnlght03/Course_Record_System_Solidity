@@ -34,12 +34,19 @@ contract CourseSystem {
 
   // @dev SuperAdmin a.k.a. contract creator can do anything
   modifier onlySuperAdmin() {
-    require(isSuperAdmin(msg.sender), "Only contract creator can do this");
+    require(
+      isSuperAdmin(msg.sender),
+      "Only contract creator can do this"
+    );
     _;
   }
 
   modifier onlyAdmin() {
-    require (isAdmin(msg.sender) || isSuperAdmin(msg.sender), "Only admin can do this");
+    require(
+      isAdmin(msg.sender) ||
+      isSuperAdmin(msg.sender),
+      "Only admin can do this"
+    );
     _;
   }
 
@@ -49,12 +56,25 @@ contract CourseSystem {
   }
 
   modifier onlyAdminOrTeacher() {
-    require (isAdmin(msg.sender) || isTeacher(msg.sender)  || isSuperAdmin(msg.sender), "Only admin or teacher can do this");
+    require(
+      isAdmin(msg.sender) ||
+      isTeacher(msg.sender)  ||
+      isSuperAdmin(msg.sender),
+      "Only admin or teacher can do this"
+    );
     _;
   }
 
   modifier onlyStudent() {
     require(isStudent(msg.sender), "Only student can do this");
+    _;
+  }
+
+  modifier onlyCourseUser() {
+    require(
+      roles[msg.sender] != Roles.NONE,
+      "This function is accessible only for registered users"
+    );
     _;
   }
 
@@ -104,7 +124,7 @@ contract CourseSystem {
   }
 
   function deleteTeacher(address teacherAddress) onlyAdmin public {
-    require(isTeacher(teacherAddress));
+    require(isTeacher(teacherAddress), "Address is not a teacher");
     teacherList.deleteTeacher(teacherAddress);
     roles[teacherAddress] = Roles.NONE;
     emit TeacherDeleted(msg.sender, teacherAddress);
@@ -211,6 +231,10 @@ contract CourseSystem {
     emit CourseDeleted(msg.sender, _courseId, name);
   }
 
+  function getCourseId(string calldata courseName)
+           onlyCourseUser public view returns (uint) {
+    return courseList.getCourseId(courseName);
+  }
   event NewCourseRequest(address student, address teacher, uint courseId);
   event RequestAccepted(address teacher, address student, uint courseId);
   event RequestDeclined(address teacher, address student, uint courseId);

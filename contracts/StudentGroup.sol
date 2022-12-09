@@ -9,7 +9,6 @@ contract StudentGroup {
   mapping (address => uint) public studentIdx;
   // @dev courseId => teacher address
   mapping (uint => address) public courseTeacher;
-  bool public deleted;
 
   constructor(uint _id) {
     id = _id;
@@ -27,17 +26,6 @@ contract StudentGroup {
     delete students[studentIdx[student]];
     delete studentIdx[student];
     totalStudents--;
-  }
-
-  function exists() public view returns (bool) {
-    return !deleted;
-  }
-
-  function deleteSelf() public {
-    delete id;
-    delete totalStudents;
-    delete students;
-    deleted = true;
   }
 
   function getStudentIdx(address student) internal view returns (uint) {

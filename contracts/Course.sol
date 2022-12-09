@@ -10,7 +10,6 @@ contract Course {
   // @dev address => idx
   mapping (address => uint) teacherIdx;
   mapping (uint => bool) public availableForGroup;
-  bool deleted;
 
   constructor(string memory courseName, uint _id) {
     name = courseName;
@@ -23,19 +22,6 @@ contract Course {
 
   function getCourseId() public view returns (uint) {
     return id;
-  }
-
-  function exists() public view returns (bool) {
-    return !deleted;
-  }
-
-  function deleteSelf() public {
-    delete name;
-    delete id;
-    delete totalTeachers;
-    for (uint i = 0; i < teacherAddresses.length; i++)
-      delete teacherIdx[getTeacherAddress(i)];
-    delete teacherAddresses;
   }
 
   function addTeacher(address teacherAddress) public {
