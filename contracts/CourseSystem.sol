@@ -31,6 +31,9 @@ contract CourseSystem {
   function isStudent(address _addr) public view returns (bool) {
     return roles[_addr] == Roles.STUDENT;
   }
+  function isCourseUser(address _addr) public view returns (bool) {
+    return roles[_addr] != Roles.NONE;
+  }
 
   // @dev SuperAdmin a.k.a. contract creator can do anything
   modifier onlySuperAdmin() {
@@ -72,7 +75,7 @@ contract CourseSystem {
 
   modifier onlyCourseUser() {
     require(
-      roles[msg.sender] != Roles.NONE,
+      isCourseUser(msg.sender),
       "This function is accessible only for registered users"
     );
     _;
