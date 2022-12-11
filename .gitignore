@@ -1,4 +1,9 @@
+.vscode
 node_modules
 artifacts
 cache
 package-lock.json
+*.txt
+*.abi
+*.bin
+compiled_contracts
