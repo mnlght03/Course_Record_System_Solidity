@@ -1,128 +1,144 @@
 const fs = require("fs");
-const Web3 = require("Web3");
+const Web3 = require("web3");
+require("dotenv").config()
 
-const web3 = new Web3("http://127.0.0.1:8545");
+const web3 = new Web3(process.env.WEB3_PROVIDER);
 
 const abi = JSON.parse(fs.readFileSync("../compiled_contracts/CourseSystem.abi").toString());
 
 class CourseSystem {
-  contractAddress = "0x391342f5acAcaaC9DE1dC4eC3E03f2678f7c78F1";
+  contractAddress = process.env.CONTRACT_ADDRESS;
   signerAddress;
   privateKey;
   contract;
 
   constructor(addr, key) {
-    signerAddress = addr;
-    privateKey = key;
-    contract = new web3.eth.Contract(abi, contractAddress, {
-      from: signerAddress,
+    this.signerAddress = addr;
+    this.privateKey = key;
+    this.contract = new web3.eth.Contract(abi, this.contractAddress, {
+      from: this.signerAddress,
       gasPrice: "30000000000000"
     });
   }
 
   acceptRequest(studentAddress, courseId) {
-    this.contract.methods.acceptRequest(studentAddress, courseId).send({from: signerAddress});
+    return this.contract.methods.acceptRequest(studentAddress, courseId).send({from: this.signerAddress});
   }
   addAdmin(newAdmin) {
-    this.contract.methods.addAdmin(newAdmin).send({from: signerAddress});
+    return this.contract.methods.addAdmin(newAdmin).send({from: this.signerAddress});
   }
   addCourse(courseName) {
-    this.contract.methods.addCourse(courseName).send({from: signerAddress});
+    return this.contract.methods.addCourse(courseName).send({from: this.signerAddress});
   }
   addGroup(groupId) {
-    this.contract.methods.addGroup(groupId).send({from: signerAddress});
+    return this.contract.methods.addGroup(groupId).send({from: this.signerAddress});
   }
-  addStudent(newStudent) {
-    this.contract.methods.addStudent(newStudent).send({from: signerAddress});
+  addStudent(newStudent, groupId) {
+    return this.contract.methods.addStudent(newStudent, groupId).send({from: this.signerAddress});
   }
   addStudentToCourse(studentAddress, courseId) {
-    this.contract.methods.addStudentToCourse(studentAddress, courseId).send({from: signerAddress});
+    return this.contract.methods.addStudentToCourse(studentAddress, courseId).send({from: this.signerAddress});
   }
   assignGroupToCourseTeacher(groupId, courseId, teacherAddress) {
-    this.contract.methods.assignGroupToCourseTeacher(groupId, courseId, teacherAddress).send({from: signerAddress});
+    return this.contract.methods.assignGroupToCourseTeacher(groupId, courseId, teacherAddress).send({from: this.signerAddress});
   }
   assignTeacherToCourse(teacherAddress, courseId) {
-    this.contract.methods.assignTeacherToCourse(teacherAddress, courseId).send({from: signerAddress});
+    return this.contract.methods.assignTeacherToCourse(teacherAddress, courseId).send({from: this.signerAddress});
   }
   changeCourseInTimetable(day, numberOfLesson, newCourse) {
-    this.contract.methods.changeCourseInTimetable(day, numberOfLesson, newCourse).send({from: signerAddress});
+    return this.contract.methods.changeCourseInTimetable(day, numberOfLesson, newCourse).send({from: this.signerAddress});
   }
   changeStudentGroup(studentAddress, newGroup) {
-    this.contract.methods.changeStudentGroup(studentAddress, newGroup).send({from: signerAddress});
+    return this.contract.methods.changeStudentGroup(studentAddress, newGroup).send({from: this.signerAddress});
   }
   declineRequest(studentAddress, courseId) {
-    this.contract.methods.declineRequest(studentAddress, courseId).send({from: signerAddress});
+    return this.contract.methods.declineRequest(studentAddress, courseId).send({from: this.signerAddress});
   }
   deleteAdmin(admin) {
-    this.contract.methods.deleteAdmin(admin).send({from: signerAddress});
+    return this.contract.methods.deleteAdmin(admin).send({from: this.signerAddress});
   }
   deleteCourse(courseId) {
-    this.contract.methods.deleteCourse(courseId).send({from: signerAddress});
+    return this.contract.methods.deleteCourse(courseId).send({from: this.signerAddress});
   }
   deleteCourseFromTimetable(day, numberOfLesson) {
-    this.contract.methods.deleteCourseFromTimetable(day, numberOfLesson).send({from: signerAddress});
+    return this.contract.methods.deleteCourseFromTimetable(day, numberOfLesson).send({from: this.signerAddress});
   }
   deleteGroup(groupId) {
-    this.contract.methods.deleteGroup(groupId).send({from: signerAddress});
+    return this.contract.methods.deleteGroup(groupId).send({from: this.signerAddress});
   }
   deleteStudent(studentAddress) {
-    this.contract.methods.deleteStudent(studentAddress).send({from: signerAddress});
+    return this.contract.methods.deleteStudent(studentAddress).send({from: this.signerAddress});
   }
   deleteStudentFromCourse(studentAddress) {
-    this.contract.methods.deleteStudentFromCourse(studentAddress).send({from: signerAddress});
+    return this.contract.methods.deleteStudentFromCourse(studentAddress).send({from: this.signerAddress});
   }
   deleteTeacher(teacher) {
-    this.contract.methods.deleteTeacher(teacher).send({from: signerAddress});
+    return this.contract.methods.deleteTeacher(teacher).send({from: this.signerAddress});
   }
   getAverageAttendance(courseId, studentAddress) {
-    this.contract.methods.getAverageAttendance(courseId, studentAddress).send({from: signerAddress});
+    return this.contract.methods.getAverageAttendance(courseId, studentAddress).call({from: this.signerAddress});
   }
   getCourseId(courseName) {
-    this.contract.methods.getCourseId(courseName).send({from: signerAddress});
+    return this.contract.methods.getCourseId(courseName).call({from: this.signerAddress});
   }
   getGradeBook(courseId, studentAddress, startDate, endDate) {
-    this.contract.methods.getGradeBook(courseId, studentAddress, startDate, endDate).send({from: signerAddress});
+    return this.contract.methods.getGradeBook(courseId, studentAddress, startDate, endDate).call({from: this.signerAddress});
   }
   getTimeTable(courseId, studentAddress, teacherAddress) {
-    this.contract.methods.getTimeTable(courseId, studentAddress, teacherAddress).send({from: signerAddress});
+    return this.contract.methods.getTimeTable(courseId, studentAddress, teacherAddress).call({from: this.signerAddress});
   }
   insertCourseInTimetable(courseId, day, numberOfLesson) {
-    this.contract.methods.insertCourseInTimetable(courseId, day, numberOfLesson).send({from: signerAddress});
+    return this.contract.methods.insertCourseInTimetable(courseId, day, numberOfLesson).send({from: this.signerAddress});
   }
   isAdmin(userAddress) {
-    this.contract.methods.isAdmin(userAddress).send({from: signerAddress});
+    return this.contract.methods.isAdmin(userAddress).send({from: this.signerAddress});
   }
   isSuperAdmin(userAddress) {
-    this.contract.methods.isSuperAdmin(userAddress).send({from: signerAddress});
+    return this.contract.methods.isSuperAdmin(userAddress).send({from: this.signerAddress});
   }
   isTeacher(userAddress) {
-    this.contract.methods.isTeacher(userAddress).send({from: signerAddress});
+    return this.contract.methods.isTeacher(userAddress).send({from: this.signerAddress});
   }
   isStudent(userAddress) {
-    this.contract.methods.isAdmin(userAddress).send({from: signerAddress});
+    return this.contract.methods.isAdmin(userAddress).send({from: this.signerAddress});
   }
   isCourseUser(userAddress) {
-    this.contract.methods.isCourseUser(userAddress).send({from: signerAddress});
+    return this.contract.methods.isCourseUser(userAddress).send({from: this.signerAddress});
   }
   makeCourseAvailableForGroup(courseId, groupId) {
-    this.contract.methods.makeCourseAvailableForGroup(courseId, groupId).send({from: signerAddress});
+    return this.contract.methods.makeCourseAvailableForGroup(courseId, groupId).send({from: this.signerAddress});
   }
   makeCourseUnavailableForGroup(courseId, groupId) {
-    this.contract.methods.makeCourseUnavailableForGroup(courseId, groupId).send({from: signerAddress});
+    return this.contract.methods.makeCourseUnavailableForGroup(courseId, groupId).send({from: this.signerAddress});
   }
   markAttendance(date, courseId, studentAddress, status) {
-    this.contract.methods.markAttendance(date, courseId, studentAddress, status).send({from: signerAddress});
+    return this.contract.methods.markAttendance(date, courseId, studentAddress, status).send({from: this.signerAddress});
   }
   rateAssignment(date, courseId, studentAddress, grade) {
-    this.contract.methods.rateAssignment(date, courseId, studentAddress, grade).send({from: signerAddress});
+    return this.contract.methods.rateAssignment(date, courseId, studentAddress, grade).send({from: this.signerAddress});
   }
   requestToJoinCourse(courseId) {
-    this.contract.methods.requestToJoinCourse(courseId).send({from: signerAddress});
+    return this.contract.methods.requestToJoinCourse(courseId).send({from: this.signerAddress});
+  }
+  roles(userAddress) {
+    return this.contract.methods.roles(userAddress).call({from: this.signerAddress}).then(
+      (res) => {
+        switch(res) {
+          case "0": return "NONE";
+          case "1": return "SUPERADMIN"
+          case "2": return "ADMIN";
+          case "3": return "TEACHER";
+          case "4": return "STUDENT";
+          default: return res;
+        }
+      });
   }
   unassignGroupFromCourseTeacher(groupId, courseId, teacherAddress) {
-    this.contract.methods.unassignGroupFromCourseTeacher(groupId, courseId, teacherAddress).send({from: signerAddress});
+    return this.contract.methods.unassignGroupFromCourseTeacher(groupId, courseId, teacherAddress).send({from: this.signerAddress});
   }
   unassignTeacherFromCourse(teacherAddress, courseId) {
-    this.contract.methods.unassignTeacherFromCourse(teacherAddress, courseId).send({from: signerAddress});
+    return this.contract.methods.unassignTeacherFromCourse(teacherAddress, courseId).send({from: this.signerAddress});
   }
 }
+
+module.exports = { CourseSystem }

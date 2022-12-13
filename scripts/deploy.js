@@ -1,12 +1,16 @@
 // web3.eth.defaultAccount
 // web3.eth.defaultBlock (default value == "latest")
 const fs = require("fs");
-const Web3 = require("Web3");
+const Web3 = require("web3");
+require("dotenv").config()
 
-const web3 = new Web3("http://127.0.0.1:8545");
+const web3 = new Web3(process.env.WEB3_PROVIDER);
 
-const signerAddress = "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199";
-const privateKey = "0xdf57089febbacf7ba0bc227dafbffa9fc08a93fdc68e1e42411a14efcf23656e";
+if (process.argv.length != 4)
+  console.log("usage: node deploy.js <signerAddress> <privateKey>");
+
+const signerAddress = process.argv[2].toString();
+const privateKey = process.argv[3].toString();
 
 web3.eth.defaultAccount = signerAddress;
 
