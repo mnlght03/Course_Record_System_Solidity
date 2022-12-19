@@ -1,6 +1,5 @@
 const fs = require("fs");
 const Web3 = require("web3");
-// const Tx = require('ethereumjs-tx').Transaction;
 require("dotenv").config();
 
 const web3 = new Web3(process.env.WEB3_PROVIDER);
@@ -66,6 +65,11 @@ class CourseSystem {
                 this.contractAddress, this.signerAddress,
                 this.privateKey);
   }
+  addTeacher(newTeacher) {
+    return send(this.contract.methods.addTeacher(newTeacher),
+                this.contractAddress, this.signerAddress,
+                this.privateKey);
+  }
   assignGroupToCourseTeacher(groupId, courseId, teacherAddress) {
     return send(this.contract.methods.assignGroupToCourseTeacher(groupId, courseId, teacherAddress),
                 this.contractAddress, this.signerAddress,
@@ -116,8 +120,8 @@ class CourseSystem {
                 this.contractAddress, this.signerAddress,
                 this.privateKey);
   }
-  deleteStudentFromCourse(studentAddress) {
-    return send(this.contract.methods.deleteStudentFromCourse(studentAddress),
+  deleteStudentFromCourse(studentAddress, courseId) {
+    return send(this.contract.methods.deleteStudentFromCourse(studentAddress, courseId),
                 this.contractAddress, this.signerAddress,
                 this.privateKey);
   }
@@ -128,6 +132,9 @@ class CourseSystem {
   }
   getAverageAttendance(courseId, studentAddress) {
     return this.contract.methods.getAverageAttendance(courseId, studentAddress).call({from: this.signerAddress});
+  }
+  getAverageScore(courseId, studentAddress) {
+    return this.contract.methods.getAverageScore(courseId, studentAddress).call({from: this.signerAddress});
   }
   getCourseId(courseName) {
     return this.contract.methods.getCourseId(courseName).call({from: this.signerAddress});
@@ -197,7 +204,7 @@ class CourseSystem {
       });
   }
   unassignGroupFromCourseTeacher(groupId, courseId, teacherAddress) {
-    return send(this.contract.methods.addGrounassignGroupFromCourseTeacher(groupId, courseId, teacherAddress),
+    return send(this.contract.methods.assignGroupFromCourseTeacher(groupId, courseId, teacherAddress),
                 this.contractAddress, this.signerAddress,
                 this.privateKey);
   }
