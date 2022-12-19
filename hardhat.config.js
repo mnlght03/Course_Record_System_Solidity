@@ -1,10 +1,15 @@
 /** @type import('hardhat/config').HardhatUserConfig */
 require("@nomiclabs/hardhat-waffle");
+require("dotenv").config()
+
 
 module.exports = {
   defaultNetwork: "hardhat",
   networks: {
-    hardhat: {
+    hardhat: {},
+    goerli: {
+      url: process.env.WEB3_PROVIDER,
+      accounts: [process.env.PRIVATE_KEY]
     }
   },
   solidity: {
