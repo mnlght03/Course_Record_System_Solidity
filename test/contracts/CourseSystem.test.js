@@ -86,4 +86,50 @@ describe("CourseSystem", () => {
   it("deleteTeacher test: teacher doesn't exist, transaction should be reverted", async () => {
     await expect(courseSystem.deleteTeacher(teacher1.address)).to.be.revertedWith("Address is not a teacher");
   });
+  it("getWholeTable test", async () => {
+    await courseSystem.addCourse("course 1")
+    await courseSystem.addCourse("course 2")
+    await courseSystem.addCourse("course 3")
+    await courseSystem.insertCourseInTimetable(1, 1, 2);
+    await courseSystem.insertCourseInTimetable(1, 1, 3);
+    await courseSystem.insertCourseInTimetable(2, 1, 1);
+    await courseSystem.insertCourseInTimetable(3, 2, 2);
+    await courseSystem.insertCourseInTimetable(3, 3, 3);
+    await courseSystem.insertCourseInTimetable(1, 4, 4);
+    await courseSystem.insertCourseInTimetable(2, 5, 5);
+    await courseSystem.insertCourseInTimetable(2, 6, 7);
+    expect(await courseSystem.getTimeTable(0,
+      ethers.constants.AddressZero,
+      ethers.constants.AddressZero))
+           .to.equal([[0, 0, 0, 0, 0, 0, 0, 0, 0],
+                      [0, 2, 1, 1, 0, 0, 0, 0, 0],
+                      [0, 0, 3, 0, 0, 0, 0, 0, 0],
+                      [0, 0, 0, 3, 0, 0, 0, 0, 0],
+                      [0, 0, 0, 0, 1, 0, 0, 0, 0],
+                      [0, 0, 0, 0, 0, 2, 0, 0, 0],
+                      [0, 0, 0, 0, 0, 0, 0, 2, 0]]);
+  });
+  // it("getTable test", async () => {
+  //   await courseSystem.addCourse("course 1")
+  //   await courseSystem.addCourse("course 2")
+  //   await courseSystem.addCourse("course 3")
+  //   await courseSystem.insertCourseInTimetable(1, 1, 2);
+  //   await courseSystem.insertCourseInTimetable(1, 1, 3);
+  //   await courseSystem.insertCourseInTimetable(2, 1, 1);
+  //   await courseSystem.insertCourseInTimetable(3, 2, 2);
+  //   await courseSystem.insertCourseInTimetable(3, 3, 3);
+  //   await courseSystem.insertCourseInTimetable(1, 4, 4);
+  //   await courseSystem.insertCourseInTimetable(2, 5, 5);
+  //   await courseSystem.insertCourseInTimetable(2, 6, 7);
+  //   expect(await courseSystem.getTimeTable(1,
+  //     ethers.constants.AddressZero,
+  //     ethers.constants.AddressZero))
+  //          .to.equal([[0, 0, 0, 0, 0, 0, 0, 0, 0],
+  //                     [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  //                     [0, 0, 3, 0, 0, 0, 0, 0, 0],
+  //                     [0, 0, 0, 3, 0, 0, 0, 0, 0],
+  //                     [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  //                     [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  //                     [0, 0, 0, 0, 0, 0, 0, 0, 0]]);
+  // });
 });

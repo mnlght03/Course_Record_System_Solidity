@@ -8,7 +8,7 @@ async function deleteTeacherController(req, res) {
   const privateKey = req.body.privateKey
   try {
     const courseSystem = new CourseSystem(senderAddress, privateKey)
-    const result = await courseSystem.deleteTeacherController(teacherAddress)
+    const result = await courseSystem.deleteTeacher(teacherAddress)
     return res.status(200).send(result)
   } catch(err) {
     return res.send(err)

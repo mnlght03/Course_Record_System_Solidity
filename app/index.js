@@ -18,6 +18,9 @@ const assignRoute = require("./routes/assignRoute");
 const unassignRoute = require("./routes/unassignRoute");
 const getRoute = require("./routes/getRoute");
 const teacherRoute = require("./routes/teacherRoute");
+const timetableRoute = require("./routes/timetableRoute")
+const courseRoute = require("./routes/courseRoute")
+
 
 const verifySenderCredentials = require("./middleware/verifySenderCredentials")
 
@@ -31,9 +34,13 @@ app.use("/assign", assignRoute)
 app.use("/unassign", unassignRoute)
 app.use("/get", getRoute)
 app.use("/teacher", teacherRoute)
+app.use("/timetable", timetableRoute)
+app.use("/course", courseRoute)
 
 app.use((req, res) => res.sendStatus(404))
 
 app.listen(port, () => {
   console.log("server listening on port ", port)
 })
+
+module.exports = app

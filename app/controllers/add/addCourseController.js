@@ -1,9 +1,9 @@
 const CourseSystem = require("../../models/CourseSystem")
 
 async function addCourseController(req, res) {
-  if (!req.body.newCourseId)
-    return res.status(400).send("newCourseId not specified")
-  const newCourse = req.body.newCourseId
+  if (!req.body.newCourseName)
+    return res.status(400).send("newCourseName not specified")
+  const newCourse = req.body.newCourseName
   const senderAddress = req.body.senderAddress
   const privateKey = req.body.privateKey
   try {

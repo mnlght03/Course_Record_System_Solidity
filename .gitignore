@@ -7,3 +7,4 @@ package-lock.json
 *.abi
 *.bin
 compiled_contracts
+.env

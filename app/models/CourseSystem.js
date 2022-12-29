@@ -8,10 +8,12 @@ const abi = JSON.parse(fs.readFileSync("./compiled_contracts/CourseSystem.abi").
 
 async function send(method, contractAddress, signerAddress, privateKey) {
   const gas = await method.estimateGas({from: signerAddress});
+  const gasPrice = await web3.eth.getGasPrice()
   const txOptions = {
     from: signerAddress,
     to: contractAddress,
     gas: gas,
+    gasPrice: gasPrice * 1.2,
     data: method.encodeABI()
   }
   const signedTx = await web3.eth.accounts.signTransaction(txOptions, privateKey);

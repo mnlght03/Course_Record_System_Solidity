@@ -301,7 +301,7 @@ contract CourseSystem {
             teacherList.getTeacherByAddress(teacherAddress).teachesCourse(courseId));
   }
 
-  // @dev specify id = 0 to show for all ids
+  // @dev specify address = 0x0 to show for all ids
   function getTimeTable(uint courseId, address studentAddress, address teacherAddress) public view returns (uint[][] memory) {
     require(courseId == 0 || courseList.courseExists(courseId), "Course doesn't exist");
     require(studentAddress == address(0) || isStudent(studentAddress));
@@ -354,7 +354,7 @@ contract CourseSystem {
   event ChangedCourseInTimeTable(address inititator, uint oldCourse, uint newCourse, uint8 day, uint8 numberOfLesson);
 
   function insertCourseInTimetable(uint courseId, uint8 day, uint8 numberOfLesson) onlyAdmin public {
-    require(courseList.courseExists(courseId));
+    require(courseList.courseExists(courseId), "Course doesn't exist");
     timeTable.insertCourse(courseId, day, numberOfLesson);
     emit CourseInsertedInTimeTable(msg.sender, courseId, day, numberOfLesson);
   }

@@ -6,8 +6,8 @@ const sendRequestController = require("../controllers/requests/sendRequestContro
 const acceptRequestController = require("../controllers/requests/acceptRequestController")
 const declineRequestController = require("../controllers/requests/declineRequestController")
 
-requestsRoute.post("", sendRequestController)
-requestsRoute.post("accept", acceptRequestController)
-requestsRoute.post("decline", declineRequestController)
+requestsRoute.post("/send", sendRequestController)
+requestsRoute.post("/accept", acceptRequestController)
+requestsRoute.post("/decline", declineRequestController)
 
 module.exports = requestsRoute
